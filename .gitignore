@@ -1,0 +1,162 @@
+# --------------------
+# Node.js dependencies
+# --------------------
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ----------------
+# Build outputs
+# ----------------
+dist/
+build/
+out/
+out2/
+.temp/
+tmp/
+tmp2/
+.cache/
+.next/
+.vercel/
+.vite/
+storybook-static/
+*.tsbuildinfo
+
+# ----------------------
+# Testing and coverage
+# ----------------------
+jest/
+jest-coverage/
+test-output/
+*.lcov
+.coverage
+.coverage.*
+.nosetests.xml
+coverage.xml
+*.cover
+.pytest_cache/
+.hypothesis/
+.tox/
+.benchmarks/
+htmlcov/
+
+# -----------------------
+# Static analysis/cache
+# -----------------------
+.eslintcache
+.cache
+
+# ----------------
+# Environment files
+# ----------------
+.env             # General .env
+.env.*           # Variant envs like .env.development
+*.local          # Local overrides
+*.log
+*.bak
+*.tmp
+*.swp
+*.orig
+
+# Common frontend env overrides (can overlap with above)
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# -----------------
+# IDE/editor files
+# -----------------
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# -----------------
+# OS-specific files
+# -----------------
+.DS_Store
+Thumbs.db
+
+# ----------------
+# Docker
+# ----------------
+docker-compose.override.yml
+*.pid
+
+# -----------------
+# Python-related
+# -----------------
+__pycache__/
+*.py[cod]
+*$py.class
+.env/           # Python virtualenv
+env/
+.venv/
+venv/
+.Python
+*.egg-info/
+*.egg
+MANIFEST
+
+# Python packaging extras
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+.installed.cfg
+
+# ------------------------
+# Jupyter notebooks
+# ------------------------
+.ipynb_checkpoints
+
+# ------------------------
+# Parcel / Webpack cache
+# ------------------------
+.parcel-cache/
+
+# ------------------------
+# Data / database files
+# ------------------------
+*.db
+*.sqlite
+*.wal
+*.duckdb
+
+# ------------------------
+# Output / temp
+# ------------------------
+temp/
+output/
+*~
+
+# ------------------------
+# Optional: lock files
+# ------------------------
+# Uncomment if you don't want to track Python Poetry lockfile
+# poetry.lock
+
+# ------------------------
+# Documentation
+# ------------------------
+site/
+
+# ------------------------
+# Misc
+# ------------------------
+*_output.txt
+coverage/
+.env
