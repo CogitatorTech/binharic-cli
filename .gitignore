@@ -160,3 +160,5 @@ site/
 *_output.txt
 coverage/
 .env
+*_test.txt
+package-lock.json_

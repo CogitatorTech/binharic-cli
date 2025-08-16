@@ -1,12 +1,7 @@
 [project]
-name = "template-typescript-project"
+name = "tobi"
 version = "0.1.0"
-description = "Python environment for JavaScript template project"
-readme = "README.md"
-license = { text = "MIT" }
-authors = [
-    { name = "Hassan Abedi", email = "hassan.abedi.t@gmail.com" }
-]
+description = "The Python environment for Tobi AI assisstant"
 
 requires-python = ">=3.10,<4.0"
 dependencies = [

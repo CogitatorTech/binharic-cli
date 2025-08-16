@@ -1,31 +1,23 @@
-# Load environment variables from .env file
-ifneq (,$(wildcard ./.env))
-    include .env
-    export $(shell sed 's/=.*//' .env)
-else
-    $(warning .env file not found. Environment variables not loaded.)
-endif
-
 # ==============================================================================
 # VARIABLES
 # ==============================================================================
 PACKAGE_MANAGER   ?= npm
 NODE_MODULES_DIR  ?= node_modules
-REMOVABLE_THINGS  ?= .vitest-cache coverage
+REMOVABLE_THINGS  ?= .vitest-cache coverage site
 
 # ==============================================================================
 # SETUP & CHECKS
 # ==============================================================================
 # Check for required tools
-REQUIRED_BINS := node $(PACKAGE_MANAGER) docker
+REQUIRED_BINS := node $(PACKAGE_MANAGER)
 $(foreach bin,$(REQUIRED_BINS),\
-	$(if $(shell command -v $(bin) 2> /dev/null),,$(error Please install $(bin) to continue)))
+    $(if $(shell command -v $(bin) 2> /dev/null),,$(error Please install $(bin) to continue)))
 
 # Internal target to check for node_modules. Not intended for direct use.
 check-deps:
 	@if [ ! -d "$(NODE_MODULES_DIR)" ]; then \
-		echo "Dependencies not found. Running 'make install' first..."; \
-		$(MAKE) install; \
+	   echo "Dependencies not found. Running 'make install' first..."; \
+	   $(MAKE) install; \
 	fi
 
 # Declare all targets as phony (not files)
@@ -45,19 +37,22 @@ help: ## Show this help message
 	awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 install: ## Install project dependencies
-	$(PACKAGE_MANAGER) install
+	$(PACKAGE_MANAGER) install --legacy-peer-deps
 
 build: check-deps ## Build the project for production
 	$(PACKAGE_MANAGER) run build
 
-start: ## Start the production server
+start: ## Run the application
 	$(PACKAGE_MANAGER) start
 
-dev: ## Start the development server
+dev: ## Run the application in development mode (with hot-reload)
 	$(PACKAGE_MANAGER) run dev
 
 clean: ## Remove caches, build artifacts and documentation
-	rm -rf dist $(NODE_MODULES_DIR) $(REMOVABLE_THINGS) site
+	rm -rf dist $(NODE_MODULES_DIR) $(REMOVABLE_THINGS)
+
+reset: clean ## Reset the project to a clean state by removing all artifacts and re-installing dependencies
+	$(MAKE) install
 
 # ==============================================================================
 # DEVELOPMENT

@@ -1,2 +1,9 @@
-#!/usr/bin/env node
-console.log("Hello from the command line!");
+// src/cli.ts
+import React from "react";
+import { render } from "ink";
+import App from "./ui/App.js";
+import logger from "./logger.js";
+
+logger.info("Tobi application started.");
+
+render(React.createElement(App));

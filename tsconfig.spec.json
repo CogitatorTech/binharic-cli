@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // This prevents the compiler from trying to output files for this config
+    "noEmit": true
+  },
+  "include": ["src/**/*", "tests/**/*"]
+}

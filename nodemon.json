@@ -1,0 +1,14 @@
+{
+  "watch": ["src"],
+  "ext": "ts",
+  "ignore": [
+    "src/**/*.test.ts",
+    "dist",
+    "node_modules",
+    ".git",
+    ".vscode",
+    ".idea"
+  ],
+  "exec": "tsx src/cli.ts",
+  "stdin": false
+}
