@@ -1,6 +1,3 @@
-// src/agent/state.ts
-// CORRECTED: Changed the tool output property from `text` to `value` to match the AI SDK's expected schema.
-
 import { create } from "zustand";
 import logger from "@/logger.js";
 import { streamAssistantResponse } from "./llm.js";

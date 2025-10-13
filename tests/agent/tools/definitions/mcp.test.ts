@@ -11,9 +11,9 @@ describe("mcp tool", () => {
     const mockClient = vi.mocked(Client);
     const mockTransport = vi.mocked(StdioClientTransport);
 
-    let mockConnect: vi.Mock;
-    let mockCallTool: vi.Mock;
-    let mockClose: vi.Mock;
+    let mockConnect: ReturnType<typeof vi.fn>;
+    let mockCallTool: ReturnType<typeof vi.fn>;
+    let mockClose: ReturnType<typeof vi.fn>;
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -28,6 +28,7 @@ describe("mcp tool", () => {
                 ({
                     connect: mockConnect,
                     callTool: mockCallTool,
+                    close: mockClose,
                 }) as unknown as Client,
         );
         mockTransport.mockImplementation(

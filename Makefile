@@ -21,8 +21,7 @@ check-deps:
 	fi
 
 # Declare all targets as phony (not files)
-.PHONY: help install check-deps test coverage lint lint-fix format typecheck build start dev clean reset \
-setup-hooks test-hooks
+.PHONY: help install check-deps test coverage lint lint-fix format typecheck build run clean reset setup-hooks test-hooks
 
 .DEFAULT_GOAL := help
 
@@ -39,20 +38,14 @@ help: ## Show this help message
 install: ## Install project dependencies
 	$(PACKAGE_MANAGER) install --legacy-peer-deps
 
-build: check-deps ## Build the project for production
+build: check-deps ## Build Tobi
 	$(PACKAGE_MANAGER) run build
 
-start: ## Run the application
+run: build ## Start Tobi in terminal
 	$(PACKAGE_MANAGER) start
 
-dev: ## Run the application in development mode (with hot-reload)
-	$(PACKAGE_MANAGER) run dev
-
-clean: ## Remove caches, build artifacts and documentation
+clean: ## Remove build artifacts
 	rm -rf dist $(NODE_MODULES_DIR) $(REMOVABLE_THINGS)
-
-reset: clean ## Reset the project to a clean state by removing all artifacts and re-installing dependencies
-	$(MAKE) install
 
 # ==============================================================================
 # DEVELOPMENT
@@ -65,9 +58,6 @@ coverage: check-deps ## Run the test suite and generate a coverage report
 
 lint: check-deps ## Run linter checks
 	$(PACKAGE_MANAGER) run lint
-
-lint-fix: check-deps ## Automatically fix linter errors
-	$(PACKAGE_MANAGER) run lint:fix
 
 typecheck: check-deps ## Run TypeScript type checks
 	$(PACKAGE_MANAGER) run typecheck

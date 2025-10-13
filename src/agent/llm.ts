@@ -1,6 +1,3 @@
-// src/agent/llm.ts
-// CORRECTED: Manually construct the tool definition to resolve the type error.
-
 import { createOpenAI } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
 import { createAnthropic } from "@ai-sdk/anthropic";
@@ -13,7 +10,6 @@ import { FatalError, TransientError } from "./errors.js";
 import { toolModules } from "./tools/definitions/index.js";
 
 export function createLlmProvider(modelConfig: ModelConfig, config: Config): LanguageModel {
-    // ... (this part remains the same)
     logger.info(`Creating LLM provider for: ${modelConfig.provider}`);
     const getApiKey = (provider: keyof NonNullable<Config["apiKeys"]>): string | undefined => {
         const keyName = config.apiKeys?.[provider];

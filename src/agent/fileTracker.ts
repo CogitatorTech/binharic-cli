@@ -1,6 +1,3 @@
-// src/agent/file-tracker.ts
-// REFACTORED: Imports errors from the new centralized `errors.ts`.
-
 import fs from "fs/promises";
 import path from "path";
 import { FileExistsError, FileOutdatedError } from "./errors.js";

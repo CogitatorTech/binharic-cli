@@ -1,6 +1,3 @@
-// src/ui/App.tsx
-// REFACTORED: Conditionally renders ToolConfirmation when the agent is waiting for input.
-
 import React, { useEffect } from "react";
 import { Box, useInput } from "ink";
 import { useStore } from "@/agent/state.js";
@@ -11,7 +8,7 @@ import { Footer } from "./Footer.js";
 import { Header } from "./Header.js";
 import { HelpMenu } from "./HelpMenu.js";
 import { ContextSummaryDisplay } from "./ContextSummaryDisplay.js";
-import { ToolConfirmation } from "./ToolConfirmation.js"; // NEW IMPORT
+import { ToolConfirmation } from "./ToolConfirmation.js";
 
 export default function App() {
     const { loadInitialConfig, helpMenuOpen, status, clearError } = useStore(

@@ -13,7 +13,7 @@ vi.mock("@/config", () => ({
     getConfigDir: () => "/tmp/tobi-test",
     loadConfig: vi.fn().mockResolvedValue({
         defaultModel: "test-model",
-        models: [{ name: "test-model", provider: "test" }],
+        models: [{ name: "test-model", provider: "ollama", modelId: "test-id", context: 32768 }],
         systemPrompt: "test-prompt",
     }),
 }));
@@ -31,11 +31,14 @@ describe("Agent State Machine", () => {
             error: null,
             config: {
                 defaultModel: "test-model",
-                models: [{ name: "test-model", provider: "test" }],
+                models: [
+                    { name: "test-model", provider: "ollama", modelId: "test-id", context: 32768 },
+                ],
                 systemPrompt: "test-prompt",
             },
             helpMenuOpen: false,
             branchName: "test-branch",
+            pendingToolRequest: null,
         });
     });
 

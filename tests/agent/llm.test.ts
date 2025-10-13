@@ -38,6 +38,7 @@ describe("createLlmProvider", () => {
             name: "test-model",
             provider: "ollama",
             modelId: "test-model-id",
+            context: 32768,
         };
         const config: Config = {
             defaultModel: "test-model",
@@ -54,10 +55,14 @@ describe("createLlmProvider", () => {
             name: "test-model",
             provider: "openai",
             modelId: "test-model-id",
+            context: 128000,
         };
         const config: Config = {
             defaultModel: "test-model",
             models: [modelConfig],
+            apiKeys: {
+                openai: "OPENAI_API_KEY",
+            },
         };
 
         createLlmProvider(modelConfig, config);
@@ -70,6 +75,7 @@ describe("createLlmProvider", () => {
             name: "test-model",
             provider: "google",
             modelId: "test-model-id",
+            context: 1000000,
         };
         const config: Config = {
             defaultModel: "test-model",
@@ -78,7 +84,7 @@ describe("createLlmProvider", () => {
 
         createLlmProvider(modelConfig, config);
 
-        expect(google).toHaveBeenCalled();
+        expect(google).toHaveBeenCalledWith("test-model-id");
     });
 
     it("should create an anthropic provider", () => {
@@ -86,10 +92,14 @@ describe("createLlmProvider", () => {
             name: "test-model",
             provider: "anthropic",
             modelId: "test-model-id",
+            context: 200000,
         };
         const config: Config = {
             defaultModel: "test-model",
             models: [modelConfig],
+            apiKeys: {
+                anthropic: "ANTHROPIC_API_KEY",
+            },
         };
 
         createLlmProvider(modelConfig, config);
@@ -97,12 +107,12 @@ describe("createLlmProvider", () => {
         expect(createAnthropic).toHaveBeenCalled();
     });
 
-    it("should throw a FatalError for an unsupported provider", () => {
+    it("should throw an error for unsupported providers", () => {
         const modelConfig: ModelConfig = {
             name: "test-model",
-            // @ts-expect-error - testing unsupported provider
-            provider: "unsupported",
+            provider: "unsupported" as any,
             modelId: "test-model-id",
+            context: 32768,
         };
         const config: Config = {
             defaultModel: "test-model",
@@ -121,6 +131,7 @@ describe("streamAssistantResponse", () => {
                 name: "test-model",
                 provider: "ollama",
                 modelId: "test-model-id",
+                context: 32768,
             },
         ],
         history: {
@@ -138,16 +149,18 @@ describe("streamAssistantResponse", () => {
 
     it("should throw a FatalError if the default model is not found", async () => {
         const invalidConfig = { ...config, defaultModel: "not-found" };
-        await expect(streamAssistantResponse([], invalidConfig)).rejects.toThrow(FatalError);
+        await expect(streamAssistantResponse([], invalidConfig, "test prompt")).rejects.toThrow(
+            FatalError,
+        );
     });
 
     it("should truncate the history based on maxItems", async () => {
         const history = [
-            { id: "1", role: "user", content: "1" },
-            { id: "2", role: "user", content: "2" },
-            { id: "3", role: "user", content: "3" },
+            { role: "user" as const, content: "1" },
+            { role: "user" as const, content: "2" },
+            { role: "user" as const, content: "3" },
         ];
-        await streamAssistantResponse(history, config);
+        await streamAssistantResponse(history, config, "test prompt");
         const passedHistory = vi.mocked(streamText).mock.calls[0][0]?.messages;
         expect(passedHistory).toHaveLength(2);
         expect(passedHistory?.[0].content).toBe("2");
@@ -155,12 +168,11 @@ describe("streamAssistantResponse", () => {
     });
 
     it("should call streamText with the correct parameters", async () => {
-        const history = [{ id: "1", role: "user", content: "hello" }];
-        await streamAssistantResponse(history, config);
+        const history = [{ role: "user" as const, content: "hello" }];
+        await streamAssistantResponse(history, config, "test prompt");
 
         expect(streamText).toHaveBeenCalledWith(
             expect.objectContaining({
-                // @ts-expect-error - private property access
                 messages: expect.arrayContaining([expect.objectContaining({ content: "hello" })]),
             }),
         );
@@ -171,7 +183,9 @@ describe("streamAssistantResponse", () => {
         error.status = 401;
         vi.mocked(streamText).mockRejectedValue(error);
 
-        await expect(streamAssistantResponse([], config)).rejects.toThrow(FatalError);
+        await expect(streamAssistantResponse([], config, "test prompt")).rejects.toThrow(
+            FatalError,
+        );
     });
 
     it("should throw a TransientError for 500 status", async () => {
@@ -179,13 +193,17 @@ describe("streamAssistantResponse", () => {
         error.status = 500;
         vi.mocked(streamText).mockRejectedValue(error);
 
-        await expect(streamAssistantResponse([], config)).rejects.toThrow(TransientError);
+        await expect(streamAssistantResponse([], config, "test prompt")).rejects.toThrow(
+            TransientError,
+        );
     });
 
     it("should throw a TransientError for other errors", async () => {
         const error = new Error("Network error");
         vi.mocked(streamText).mockRejectedValue(error);
 
-        await expect(streamAssistantResponse([], config)).rejects.toThrow(TransientError);
+        await expect(streamAssistantResponse([], config, "test prompt")).rejects.toThrow(
+            TransientError,
+        );
     });
 });

@@ -9,7 +9,7 @@ vi.mock("child_process", () => ({
 }));
 
 describe("bash tool", () => {
-    let spawnMock: vi.MockedFunction<typeof spawn>;
+    let spawnMock: ReturnType<typeof vi.fn>;
     let childProcessMock: ChildProcess;
     let stdoutMock: EventEmitter;
     let stderrMock: EventEmitter;
@@ -18,10 +18,8 @@ describe("bash tool", () => {
         childProcessMock = new EventEmitter() as ChildProcess;
         stdoutMock = new EventEmitter();
         stderrMock = new EventEmitter();
-        // @ts-expect-error - Mocking properties for testing
-        childProcessMock.stdout = stdoutMock;
-        // @ts-expect-error - Mocking properties for testing
-        childProcessMock.stderr = stderrMock;
+        (childProcessMock as any).stdout = stdoutMock;
+        (childProcessMock as any).stderr = stderrMock;
 
         spawnMock = vi.mocked(spawn).mockReturnValue(childProcessMock);
     });

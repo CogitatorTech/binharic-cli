@@ -38,17 +38,15 @@ function getLogger(): winston.Logger {
     return logger;
 }
 
-// Use a proxy to lazily initialize the logger on first access.
-const loggerProxy = new Proxy(
-    {},
-    {
-        get(_, prop) {
-            const loggerInstance = getLogger();
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            return loggerInstance[prop];
-        },
+const loggerProxy = new Proxy({} as winston.Logger, {
+    get(_, prop: string) {
+        const loggerInstance = getLogger();
+        const value = loggerInstance[prop as keyof winston.Logger];
+        if (typeof value === "function") {
+            return value.bind(loggerInstance);
+        }
+        return value;
     },
-) as winston.Logger;
+});
 
 export default loggerProxy;

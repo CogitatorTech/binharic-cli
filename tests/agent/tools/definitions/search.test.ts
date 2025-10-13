@@ -27,7 +27,7 @@ describe("search tool", () => {
         mockSpawn.mockReturnValue(mockChildProcess as unknown as ReturnType<typeof spawn>);
 
         const { implementation } = searchTool;
-        const result = await implementation({ query: "test" });
+        const result = await implementation({ query: "test", timeout: 10000 });
 
         expect(result).toBe("file1.ts\nfile2.ts");
         expect(mockSpawn).toHaveBeenCalledWith(
@@ -90,7 +90,7 @@ describe("search tool", () => {
         mockSpawn.mockReturnValue(mockChildProcess as unknown as ReturnType<typeof spawn>);
 
         const { implementation } = searchTool;
-        await expect(implementation({ query: "test" })).rejects.toThrow(
+        await expect(implementation({ query: "test", timeout: 10000 })).rejects.toThrow(
             "Command exited with code: 1\nOutput:\nfind: some error",
         );
     });
@@ -102,7 +102,7 @@ describe("search tool", () => {
         });
 
         const { implementation } = searchTool;
-        await expect(implementation({ query: "test" })).rejects.toThrow(
+        await expect(implementation({ query: "test", timeout: 10000 })).rejects.toThrow(
             "Command failed to start: spawn failed",
         );
     });

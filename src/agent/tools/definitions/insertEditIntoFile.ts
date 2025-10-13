@@ -28,8 +28,7 @@ async function implementation(
         await fileTracker.assertCanEdit(args.filePath);
         const originalContent = await fileTracker.read(args.filePath);
 
-        // Smart diff application logic
-        let newContent = applySmartEdit(originalContent, args.code);
+        const newContent = applySmartEdit(originalContent, args.code);
 
         await fileTracker.write(args.filePath, newContent);
         return `Successfully edited file at ${args.filePath}. ${args.explanation}`;
@@ -48,7 +47,6 @@ async function implementation(
 }
 
 function applySmartEdit(originalContent: string, editCode: string): string {
-    // Remove comment markers that indicate unchanged code
     const cleanedEdit = editCode
         .split("\n")
         .filter((line) => !line.trim().match(/^\/\/\s*\.\.\.existing code\.\.\./))
@@ -56,21 +54,32 @@ function applySmartEdit(originalContent: string, editCode: string): string {
         .filter((line) => !line.trim().match(/^<!--\s*\.\.\.existing code\.\.\.\s*-->/))
         .join("\n");
 
-    // Try to intelligently merge the edit with the original
     const lines = originalContent.split("\n");
     const editLines = cleanedEdit.split("\n");
 
-    // Simple heuristic: if edit is shorter, try to find matching context and replace
-    if (editLines.length < lines.length * 0.8) {
-        // Look for the first few lines of the edit in the original
-        const searchStart = editLines.slice(0, Math.min(3, editLines.length)).join("\n");
-        if (originalContent.includes(searchStart)) {
-            // Found a match - this is likely a targeted edit
-            return originalContent.replace(searchStart, cleanedEdit);
+    if (editLines.length < lines.length * 0.3) {
+        const firstNonEmptyLines = editLines
+            .filter((line) => line.trim())
+            .slice(0, Math.min(2, editLines.length));
+
+        if (firstNonEmptyLines.length > 0) {
+            const searchPattern = firstNonEmptyLines.join("\n");
+            const index = originalContent.indexOf(searchPattern);
+
+            if (index !== -1) {
+                const endIndex = index + searchPattern.length;
+                const nextNewline = originalContent.indexOf("\n", endIndex);
+                const endPoint = nextNewline !== -1 ? nextNewline : originalContent.length;
+
+                return (
+                    originalContent.substring(0, index) +
+                    cleanedEdit +
+                    originalContent.substring(endPoint)
+                );
+            }
         }
     }
 
-    // If no smart match found, return the edit as-is (full replacement)
     return cleanedEdit;
 }
 

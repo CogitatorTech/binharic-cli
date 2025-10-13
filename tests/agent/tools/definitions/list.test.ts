@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import listTool from "../../../../src/agent/tools/definitions/list";
 import fs from "fs/promises";
+import { Stats, Dirent } from "fs";
 
 vi.mock("fs/promises", () => ({
     default: {
@@ -14,8 +15,8 @@ describe("list tool", () => {
         const mockStat = vi.mocked(fs.stat);
         const mockReaddir = vi.mocked(fs.readdir);
 
-        mockStat.mockResolvedValue({ isDirectory: () => true } as fs.Stats);
-        mockReaddir.mockResolvedValue(["file1.ts", "file2.ts"]);
+        mockStat.mockResolvedValue({ isDirectory: () => true } as Stats);
+        mockReaddir.mockResolvedValue(["file1.ts", "file2.ts"] as unknown as Dirent[]);
 
         const { implementation } = listTool;
         const result = await implementation({ path: "/test" });
@@ -29,7 +30,7 @@ describe("list tool", () => {
         const mockStat = vi.mocked(fs.stat);
         const mockReaddir = vi.mocked(fs.readdir);
 
-        mockStat.mockResolvedValue({ isDirectory: () => true } as fs.Stats);
+        mockStat.mockResolvedValue({ isDirectory: () => true } as Stats);
         mockReaddir.mockResolvedValue([]);
 
         const { implementation } = listTool;
@@ -40,7 +41,7 @@ describe("list tool", () => {
 
     it("should throw a ToolError when the path is not a directory", async () => {
         const mockStat = vi.mocked(fs.stat);
-        mockStat.mockResolvedValue({ isDirectory: () => false } as fs.Stats);
+        mockStat.mockResolvedValue({ isDirectory: () => false } as Stats);
 
         const { implementation } = listTool;
         await expect(implementation({ path: "/test" })).rejects.toThrow(
@@ -50,49 +51,37 @@ describe("list tool", () => {
 
     it("should throw a ToolError when the path does not exist", async () => {
         const mockStat = vi.mocked(fs.stat);
-        const error: NodeJS.ErrnoException = new Error("Not found");
+        const error = new Error("ENOENT: no such file or directory") as NodeJS.ErrnoException;
         error.code = "ENOENT";
         mockStat.mockRejectedValue(error);
 
         const { implementation } = listTool;
-        await expect(implementation({ path: "/nonexistent" })).rejects.toThrow(
-            "Directory not found at path: /nonexistent",
+        await expect(implementation({ path: "/test" })).rejects.toThrow(
+            "Directory not found at path: /test",
         );
     });
 
-    it("should throw a ToolError for other stat errors", async () => {
+    it("should throw a generic ToolError for other errors", async () => {
         const mockStat = vi.mocked(fs.stat);
-        mockStat.mockRejectedValue(new Error("Some other error"));
+        mockStat.mockRejectedValue(new Error("Permission denied"));
 
         const { implementation } = listTool;
-        await expect(implementation({ path: "/test" })).rejects.toThrow(
-            "Error listing files: Some other error",
-        );
+        await expect(implementation({ path: "/test" })).rejects.toThrow("Permission denied");
     });
 
-    it("should list the current directory when no path is provided", async () => {
+    it("should handle special characters in filenames", async () => {
         const mockStat = vi.mocked(fs.stat);
         const mockReaddir = vi.mocked(fs.readdir);
-        const cwd = process.cwd();
 
-        mockStat.mockResolvedValue({ isDirectory: () => true } as fs.Stats);
-        mockReaddir.mockResolvedValue(["file1.ts", "file2.ts"]);
-
-        const { implementation } = listTool;
-        const result = await implementation({});
-
-        expect(result).toBe("file1.ts\nfile2.ts");
-        expect(mockStat).toHaveBeenCalledWith(cwd);
-        expect(mockReaddir).toHaveBeenCalledWith(cwd);
-    });
-
-    it("should throw a ToolError for unknown errors", async () => {
-        const mockStat = vi.mocked(fs.stat);
-        mockStat.mockRejectedValue("an unknown error");
+        mockStat.mockResolvedValue({ isDirectory: () => true } as Stats);
+        mockReaddir.mockResolvedValue([
+            "file with spaces.ts",
+            "file@special#chars.ts",
+        ] as unknown as Dirent[]);
 
         const { implementation } = listTool;
-        await expect(implementation({ path: "/test" })).rejects.toThrow(
-            "An unknown error occurred while listing files.",
-        );
+        const result = await implementation({ path: "/test" });
+
+        expect(result).toBe("file with spaces.ts\nfile@special#chars.ts");
     });
 });

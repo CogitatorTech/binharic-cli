@@ -1,5 +1,5 @@
 // src/config.ts
-import {z} from "zod";
+import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
@@ -62,11 +62,11 @@ const defaultConfig: Config = {
     defaultModel: "gpt-5-mini",
     models: [
         // OpenAI models
-        {name: "gpt-4o-mini", provider: "openai", modelId: "gpt-4o", context: 128000},
-        {name: "gpt-4o", provider: "openai", modelId: "gpt-4o", context: 128000},
-        {name: "gpt-5-nano", provider: "openai", modelId: "gpt-5-nano", context: 400000},
-        {name: "gpt-5-mini", provider: "openai", modelId: "gpt-5-mini", context: 400000},
-        {name: "gpt-5", provider: "openai", modelId: "gpt-5", context: 400000},
+        { name: "gpt-4o", provider: "openai", modelId: "gpt-4o", context: 128000 },
+        { name: "gpt-4o-mini", provider: "openai", modelId: "gpt-4o-mini", context: 128000 },
+        { name: "gpt-5-nano", provider: "openai", modelId: "gpt-5-nano", context: 400000 },
+        { name: "gpt-5-mini", provider: "openai", modelId: "gpt-5-mini", context: 400000 },
+        { name: "gpt-5", provider: "openai", modelId: "gpt-5", context: 400000 },
         // Anthropic models
         {
             name: "claude-4-sonnet",
@@ -77,7 +77,7 @@ const defaultConfig: Config = {
         {
             name: "claude-4.5-sonnet",
             provider: "anthropic",
-            modelId: "claude-4.5-sonnet",
+            modelId: "claude-4-5-sonnet",
             context: 1000000,
         },
         // Google models
@@ -127,7 +127,7 @@ export async function loadConfig(): Promise<Config> {
         const parsedConfig = json5.parse(configContent);
 
         // Merge user's config over defaults. This makes adding new keys in updates non-breaking.
-        const mergedConfig = {...defaultConfig, ...parsedConfig};
+        const mergedConfig = { ...defaultConfig, ...parsedConfig };
         const finalConfig = configSchema.parse(mergedConfig);
         logger.info("Configuration loaded successfully.");
         return finalConfig;
@@ -138,18 +138,18 @@ export async function loadConfig(): Promise<Config> {
             console.warn(
                 `Please open this file and update your environment variables (.env) with your API keys.`,
             );
-            await fs.mkdir(getConfigDir(), {recursive: true});
+            await fs.mkdir(getConfigDir(), { recursive: true });
             // Also create the logs directory
             const LOGS_DIR = path.join(getConfigDir(), "logs");
-            await fs.mkdir(LOGS_DIR, {recursive: true});
+            await fs.mkdir(LOGS_DIR, { recursive: true });
             await fs.writeFile(CONFIG_PATH, json5.stringify(defaultConfig, null, 2));
             logger.info("Default configuration file created.");
             return defaultConfig;
         } else if (error instanceof z.ZodError) {
-            logger.error("Configuration file is invalid:", {error: error.issues});
+            logger.error("Configuration file is invalid:", { error: error.issues });
             console.error("Configuration file is invalid:", error.issues);
         } else {
-            logger.error("Failed to load configuration:", {error});
+            logger.error("Failed to load configuration:", { error });
             console.error("Failed to load configuration:", error);
         }
         process.exit(1);
@@ -171,7 +171,7 @@ export async function saveConfig(config: Config): Promise<void> {
         await fs.writeFile(CONFIG_PATH, json5.stringify(configToSave, null, 2));
         logger.info("Configuration saved successfully.");
     } catch (error) {
-        logger.error("Failed to save configuration:", {error});
+        logger.error("Failed to save configuration:", { error });
         console.error("Failed to save configuration:", error);
         // We don't want to exit the app if saving fails, but we should let the user know.
     }

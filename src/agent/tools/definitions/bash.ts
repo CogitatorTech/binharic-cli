@@ -1,7 +1,3 @@
-//! SECURITY WARNING: This tool allows the AI to execute arbitrary shell commands.
-//! This is a significant security risk. Do not use this in a production environment
-//! or on a system with sensitive data without extensive sandboxing.
-
 import { z } from "zod";
 import { spawn } from "child_process";
 import type { ToolDef } from "../common.js";
@@ -61,5 +57,6 @@ async function implementation(args: z.infer<typeof bashSchema>["arguments"]): Pr
 export default {
     schema: bashSchema,
     implementation,
-    description: "Execute a shell command.",
+    description:
+        "Execute a shell command. WARNING: Review security documentation before use in production environments.",
 } satisfies ToolDef<typeof bashSchema>;
