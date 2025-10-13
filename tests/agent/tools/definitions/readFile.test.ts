@@ -13,8 +13,7 @@ describe("readFile tool", () => {
         const mockRead = vi.mocked(fileTracker.read);
         mockRead.mockResolvedValue("file content");
 
-        const { implementation } = readFileTool;
-        const result = await implementation({ path: "test.ts" });
+        const result = await readFileTool.execute!({ path: "test.ts" }, {} as any);
 
         expect(result).toBe("file content");
         expect(mockRead).toHaveBeenCalledWith("test.ts");
@@ -26,8 +25,7 @@ describe("readFile tool", () => {
         error.code = "ENOENT";
         mockRead.mockRejectedValue(error);
 
-        const { implementation } = readFileTool;
-        await expect(implementation({ path: "nonexistent.ts" })).rejects.toThrow(
+        await expect(readFileTool.execute!({ path: "nonexistent.ts" }, {} as any)).rejects.toThrow(
             "File not found at path: nonexistent.ts",
         );
     });
@@ -36,8 +34,7 @@ describe("readFile tool", () => {
         const mockRead = vi.mocked(fileTracker.read);
         mockRead.mockRejectedValue(new Error("Some other error"));
 
-        const { implementation } = readFileTool;
-        await expect(implementation({ path: "test.ts" })).rejects.toThrow(
+        await expect(readFileTool.execute!({ path: "test.ts" }, {} as any)).rejects.toThrow(
             "Error reading file: Some other error",
         );
     });
@@ -46,8 +43,7 @@ describe("readFile tool", () => {
         const mockRead = vi.mocked(fileTracker.read);
         mockRead.mockRejectedValue("an unknown error");
 
-        const { implementation } = readFileTool;
-        await expect(implementation({ path: "test.ts" })).rejects.toThrow(
+        await expect(readFileTool.execute!({ path: "test.ts" }, {} as any)).rejects.toThrow(
             "An unknown error occurred while reading the file.",
         );
     });

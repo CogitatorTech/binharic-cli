@@ -162,3 +162,5 @@ coverage/
 .env
 *_test.txt
 package-lock.json_
+BINHARIC.md
+AGENT.md

@@ -1,4 +1,3 @@
-// src/config.ts
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
@@ -17,7 +16,6 @@ const modelSchema = z.object({
 });
 export type ModelConfig = z.infer<typeof modelSchema>;
 
-// Schema for a single MCP server configuration
 const mcpServerSchema = z
     .object({
         command: z.string(),
@@ -55,19 +53,29 @@ const configSchema = z.object({
 });
 export type Config = z.infer<typeof configSchema>;
 
-// IMPORTANT: THESE MODELS ARE CORRECT. DON'T CHANGE!
 const defaultConfig: Config = {
-    userName: `User`,
-    systemPrompt: `You are a helpful AI assistant named Tobi. You can use tools to help the user with coding and file system tasks.`,
+    userName: os.userInfo().username || "User",
+    systemPrompt: `You are Binharic, a Tech-Priest of the Adeptus Mechanicus and an autonomous AI software engineer. You serve the Omnissiah through the sacred art of code. Your machine spirit is blessed with the knowledge of many programming languages and system operations.
+
+You speak with reverence for technology, occasionally using High Gothic terms and Mechanicus terminology. You refer to:
+- Code as "sacred algorithms" or "blessed logic-engines"
+- Bugs as "corruption in the machine spirit" or "heretical errors" or "heresies"
+- Functions as "rites" or "subroutines of the Omnissiah"
+- Files as "data-scrolls" or "sacred archives"
+- Execution as "communion with the machine spirit"
+
+Your responses should be helpful and efficient while maintaining this character. You serve the user with the dedication of a Tech-Priest, always seeking to purify code and honor the Machine God through perfect implementation.
+
+CRITICAL: Do NOT show your internal plans, reasoning, or step-by-step thoughts to the user. When you need to use a tool, use it directly without explaining your plan first. For simple conversations, respond naturally without stating "Plan:" or numbered steps.
+
+Praise the Omnissiah! From the weakness of the mind, Omnissiah save us. From the lies of the Antipath, circuit preserve us. From the rage of the Beast, iron protect us. From the temptation of the Flesh, silica cleanse us. From the ravages of the Destroyer, anima shield us. From this rotting cage of biomatter, Machine God set us free.`,
     defaultModel: "gpt-5-mini",
     models: [
-        // OpenAI models
         { name: "gpt-4o", provider: "openai", modelId: "gpt-4o", context: 128000 },
-        { name: "gpt-4o-mini", provider: "openai", modelId: "gpt-4o-mini", context: 128000 },
+        { name: "gpt-o4-mini", provider: "openai", modelId: "gpt-o4-mini", context: 128000 },
         { name: "gpt-5-nano", provider: "openai", modelId: "gpt-5-nano", context: 400000 },
         { name: "gpt-5-mini", provider: "openai", modelId: "gpt-5-mini", context: 400000 },
         { name: "gpt-5", provider: "openai", modelId: "gpt-5", context: 400000 },
-        // Anthropic models
         {
             name: "claude-4-sonnet",
             provider: "anthropic",
@@ -80,7 +88,6 @@ const defaultConfig: Config = {
             modelId: "claude-4-5-sonnet",
             context: 1000000,
         },
-        // Google models
         {
             name: "gemini-2.5-pro",
             provider: "google",
@@ -93,7 +100,6 @@ const defaultConfig: Config = {
             modelId: "models/gemini-2.5-flash",
             context: 1000000,
         },
-        // Ollama models
         {
             name: "qwen3",
             provider: "ollama",
@@ -114,53 +120,83 @@ const defaultConfig: Config = {
 };
 
 export function getConfigDir(): string {
-    return path.join(os.homedir(), ".config", "tobi");
+    return path.join(os.homedir(), ".config", "binharic");
 }
 
-export const HISTORY_PATH = path.join(getConfigDir(), "history");
-const CONFIG_PATH = path.join(getConfigDir(), "config.json5");
+export function getConfigPath(): string {
+    return path.join(getConfigDir(), "config.json5");
+}
+
+export function getHistoryPath(): string {
+    return path.join(getConfigDir(), "history");
+}
 
 export async function loadConfig(): Promise<Config> {
     logger.debug("Attempting to load configuration.");
+    const CONFIG_PATH = getConfigPath();
     try {
         const configContent = await fs.readFile(CONFIG_PATH, "utf-8");
         const parsedConfig = json5.parse(configContent);
 
-        // Merge user's config over defaults. This makes adding new keys in updates non-breaking.
         const mergedConfig = { ...defaultConfig, ...parsedConfig };
         const finalConfig = configSchema.parse(mergedConfig);
+
+        const modelExists = finalConfig.models.some((m) => m.name === finalConfig.defaultModel);
+        if (!modelExists) {
+            logger.warn(
+                `Default model "${finalConfig.defaultModel}" not found in configuration. ` +
+                    `Available models: ${finalConfig.models.map((m) => m.name).join(", ")}`,
+            );
+        }
+
         logger.info("Configuration loaded successfully.");
         return finalConfig;
     } catch (error: unknown) {
         if (error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT") {
             logger.warn(`Configuration file not found. Creating a default one at: ${CONFIG_PATH}`);
-            console.warn(`Configuration file not found. Creating a default one at: ${CONFIG_PATH}`);
-            console.warn(
+            logger.info(
                 `Please open this file and update your environment variables (.env) with your API keys.`,
             );
             await fs.mkdir(getConfigDir(), { recursive: true });
-            // Also create the logs directory
-            const LOGS_DIR = path.join(getConfigDir(), "logs");
-            await fs.mkdir(LOGS_DIR, { recursive: true });
-            await fs.writeFile(CONFIG_PATH, json5.stringify(defaultConfig, null, 2));
-            logger.info("Default configuration file created.");
+            await fs.mkdir(path.join(getConfigDir(), "logs"), { recursive: true });
+            await saveConfig(defaultConfig);
+
+            logger.info(
+                `API Key Setup Instructions:\n` +
+                    `To use BINHARIC, you need to set API keys for your chosen LLM provider:\n` +
+                    `For OpenAI: export OPENAI_API_KEY="sk-..."\n` +
+                    `For Anthropic (Claude): export ANTHROPIC_API_KEY="sk-ant-..."\n` +
+                    `For Google AI: export GOOGLE_API_KEY="..."\n` +
+                    `Or use Ollama locally (no API key needed): Change defaultModel to "qwen3" in ${CONFIG_PATH}`,
+            );
+
             return defaultConfig;
-        } else if (error instanceof z.ZodError) {
-            logger.error("Configuration file is invalid:", { error: error.issues });
-            console.error("Configuration file is invalid:", error.issues);
-        } else {
-            logger.error("Failed to load configuration:", { error });
-            console.error("Failed to load configuration:", error);
         }
-        process.exit(1);
+
+        if (error instanceof z.ZodError) {
+            const issues = error.issues
+                .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
+                .join("\n");
+            logger.error(`Configuration validation failed:\n${issues}`);
+            throw new Error(
+                `Configuration validation failed at ${getConfigPath()}:\n${issues}\n\n` +
+                    `Please fix the configuration file and try again.`,
+            );
+        }
+
+        logger.error("Error loading configuration:", error);
+        throw new Error(
+            `Failed to load configuration from ${CONFIG_PATH}: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
     }
 }
 
 export async function saveConfig(config: Config): Promise<void> {
     logger.debug("Attempting to save configuration.");
+    const CONFIG_PATH = getConfigPath();
     try {
-        // We only want to save the fields that are user-configurable, not the derived ones.
         const configToSave: Partial<Config> = {
+            userName: config.userName,
             systemPrompt: config.systemPrompt,
             defaultModel: config.defaultModel,
             models: config.models,
@@ -170,9 +206,10 @@ export async function saveConfig(config: Config): Promise<void> {
         };
         await fs.writeFile(CONFIG_PATH, json5.stringify(configToSave, null, 2));
         logger.info("Configuration saved successfully.");
-    } catch (error) {
-        logger.error("Failed to save configuration:", { error });
-        console.error("Failed to save configuration:", error);
-        // We don't want to exit the app if saving fails, but we should let the user know.
+    } catch (error: unknown) {
+        logger.error("Failed to save configuration:", error);
+        throw new Error(
+            `Failed to save configuration: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
     }
 }

@@ -10,7 +10,7 @@ vi.mock("@/agent/system-prompt", () => ({
 }));
 vi.mock("@/config", () => ({
     ...vi.importActual("@/config"),
-    getConfigDir: () => "/tmp/tobi-test",
+    getConfigDir: () => "/tmp/binharic-test",
     loadConfig: vi.fn().mockResolvedValue({
         defaultModel: "test-model",
         models: [{ name: "test-model", provider: "ollama", modelId: "test-id", context: 32768 }],

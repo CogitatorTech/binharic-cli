@@ -53,18 +53,18 @@ describe("History", () => {
         expect(lastFrame()).toContain("Hello! How can I help you today?");
     });
 
-    it("should render tool call messages", () => {
+    it("should not render tool call messages (they are hidden in UI)", () => {
         const history: HistoryItem[] = [
             {
                 id: "1",
                 role: "tool-request",
                 calls: [
                     {
-                        type: "tool-call",
+                        type: "tool-call" as const,
                         toolCallId: "tool-call-123",
                         toolName: "readFile",
-                        input: { path: "test.txt" },
-                    },
+                        args: { path: "test.txt" },
+                    } as unknown as any,
                 ],
             },
         ];
@@ -72,11 +72,11 @@ describe("History", () => {
         mockedUseStore.mockImplementation((selector) => selector(createMockState(history)));
 
         const { lastFrame } = render(<History />);
-        expect(lastFrame()).toContain("Proposed Tool Call(s):");
-        expect(lastFrame()).toContain('› readFile({"path":"test.txt"})');
+        expect(lastFrame()).not.toContain("Proposed Tool Call(s):");
+        expect(lastFrame()).not.toContain("readFile");
     });
 
-    it("should render tool result messages", () => {
+    it("should not render tool result messages (they are hidden in UI)", () => {
         const history: HistoryItem[] = [
             {
                 id: "1",
@@ -90,25 +90,7 @@ describe("History", () => {
         mockedUseStore.mockImplementation((selector) => selector(createMockState(history)));
 
         const { lastFrame } = render(<History />);
-        expect(lastFrame()).toContain("› Tool Result (readFile):");
-        expect(lastFrame()).toContain("hello world");
-    });
-
-    it("should render long tool result messages correctly", () => {
-        const longOutput = "line 1\nline 2\nline 3";
-        const history: HistoryItem[] = [
-            {
-                id: "1",
-                role: "tool-result",
-                toolCallId: "tool-call-456",
-                toolName: "longTool",
-                output: longOutput,
-            },
-        ];
-
-        mockedUseStore.mockImplementation((selector) => selector(createMockState(history)));
-
-        const { lastFrame } = render(<History />);
-        expect(lastFrame()).toContain("› Tool Result (longTool):");
+        expect(lastFrame()).not.toContain("\u203a Tool Result (readFile):");
+        expect(lastFrame()).not.toContain("hello world");
     });
 });

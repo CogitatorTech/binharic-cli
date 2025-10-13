@@ -1,7 +1,7 @@
 [project]
-name = "tobi"
+name = "binharnic-cli"
 version = "0.1.0"
-description = "The Python environment for Tobi AI assisstant"
+description = "The Python environment for Binharnic AI assisstant"
 
 requires-python = ">=3.10,<4.0"
 dependencies = [

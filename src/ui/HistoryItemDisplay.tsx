@@ -1,15 +1,28 @@
-// src/ui/HistoryItemDisplay.tsx
-// REFACTORED: This component is now much more powerful. It renders the different
-// types from our new rich `HistoryItem` structure.
-
 import React from "react";
 import { Box, Text } from "ink";
 import { marked, type Token } from "marked";
 import type { AssistantContent } from "ai";
 import type { HistoryItem } from "@/agent/history.js";
 
+function extractTextFromTokens(tokens: Token[] | undefined): string {
+    if (!tokens) return "";
+    return tokens
+        .map((token) => {
+            if ("text" in token && typeof token.text === "string") {
+                return token.text;
+            }
+            if ("tokens" in token) {
+                return extractTextFromTokens(token.tokens as Token[]);
+            }
+            if ("raw" in token) {
+                return token.raw;
+            }
+            return "";
+        })
+        .join("");
+}
+
 function MarkdownRenderer({ content }: { content: string }) {
-    // This component remains the same as your original, it's good.
     const tokens = marked.lexer(content);
     const renderTokens = (tokens: Token[] | undefined): React.ReactNode => {
         if (!tokens) return null;
@@ -18,7 +31,9 @@ function MarkdownRenderer({ content }: { content: string }) {
                 case "heading":
                     return (
                         <Text key={index} bold>
-                            {"tokens" in token && renderTokens(token.tokens)}
+                            {extractTextFromTokens(
+                                "tokens" in token ? (token.tokens as Token[]) : undefined,
+                            )}
                         </Text>
                     );
                 case "paragraph":
@@ -33,7 +48,9 @@ function MarkdownRenderer({ content }: { content: string }) {
                             {token.items.map((item: Token, itemIndex: number) => (
                                 <Text key={itemIndex}>
                                     {token.ordered ? `${itemIndex + 1}.` : "-"}{" "}
-                                    {"tokens" in item && renderTokens(item.tokens)}
+                                    {extractTextFromTokens(
+                                        "tokens" in item ? (item.tokens as Token[]) : undefined,
+                                    )}
                                 </Text>
                             ))}
                         </Box>
@@ -47,19 +64,27 @@ function MarkdownRenderer({ content }: { content: string }) {
                 case "blockquote":
                     return (
                         <Box key={index} borderStyle="single" paddingX={1} borderColor="gray">
-                            <Text>{"tokens" in token && renderTokens(token.tokens)}</Text>
+                            <Text>
+                                {extractTextFromTokens(
+                                    "tokens" in token ? (token.tokens as Token[]) : undefined,
+                                )}
+                            </Text>
                         </Box>
                     );
                 case "strong":
                     return (
                         <Text key={index} bold>
-                            {"tokens" in token && renderTokens(token.tokens)}
+                            {extractTextFromTokens(
+                                "tokens" in token ? (token.tokens as Token[]) : undefined,
+                            )}
                         </Text>
                     );
                 case "em":
                     return (
                         <Text key={index} italic>
-                            {"tokens" in token && renderTokens(token.tokens)}
+                            {extractTextFromTokens(
+                                "tokens" in token ? (token.tokens as Token[]) : undefined,
+                            )}
                         </Text>
                     );
                 case "text":
@@ -74,16 +99,13 @@ function MarkdownRenderer({ content }: { content: string }) {
     return <Box flexDirection="column">{renderTokens(tokens)}</Box>;
 }
 
-// Renders content from an assistant, which might be text or structured tool calls.
 function AssistantMessageContent({ content }: { content: AssistantContent | string }) {
     if (typeof content === "string") {
-        return <MarkdownRenderer content={`Tobi: ${content}`} />;
+        return <MarkdownRenderer content={content} />;
     }
     const textPart = content.find((part) => part.type === "text");
     return (
-        <Box flexDirection="column">
-            {textPart && <MarkdownRenderer content={`Tobi: ${textPart.text}`} />}
-        </Box>
+        <Box flexDirection="column">{textPart && <MarkdownRenderer content={textPart.text} />}</Box>
     );
 }
 
@@ -91,46 +113,16 @@ export function HistoryItemDisplay({ message }: { message: HistoryItem }) {
     switch (message.role) {
         case "user":
             return <Text color="white">&gt; {message.content}</Text>;
-
         case "assistant":
             return (
                 <Box borderStyle="round" borderColor="green" paddingX={1}>
                     <AssistantMessageContent content={message.content} />
                 </Box>
             );
-
         case "tool-request":
-            return (
-                <Box borderStyle="round" borderColor="yellow" paddingX={1} flexDirection="column">
-                    <Text color="yellow" bold>
-                        Proposed Tool Call(s):
-                    </Text>
-                    {message.calls.map((call) => (
-                        <Text key={call.toolCallId} color="yellow" dimColor>
-                            › {call.toolName}({JSON.stringify(call.input)})
-                        </Text>
-                    ))}
-                </Box>
-            );
-
-        case "tool-result": {
-            const resultString =
-                typeof message.output === "string"
-                    ? message.output
-                    : JSON.stringify(message.output, null, 2);
-
-            return (
-                <Box borderStyle="round" borderColor="cyan" paddingX={1} flexDirection="column">
-                    <Text color="cyan" bold>
-                        › Tool Result ({message.toolName}):
-                    </Text>
-                    <Text color="cyan" dimColor>
-                        {resultString}
-                    </Text>
-                </Box>
-            );
-        }
-
+            return null;
+        case "tool-result":
+            return null;
         case "tool-failure":
             return (
                 <Box borderStyle="round" borderColor="red" paddingX={1} flexDirection="column">
@@ -140,7 +132,6 @@ export function HistoryItemDisplay({ message }: { message: HistoryItem }) {
                     <Text color="red">{message.error}</Text>
                 </Box>
             );
-
         default:
             return null;
     }

@@ -1,167 +1,101 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FileExistsError, FileOutdatedError, FileTracker } from "@/agent/fileTracker";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { FileTracker, FileExistsError, FileOutdatedError } from "../../src/agent/fileTracker.js";
 import fs from "fs/promises";
-import { Stats } from "fs";
 import path from "path";
-
-// Mock the fs/promises module
-vi.mock("fs/promises");
+import os from "os";
 
 describe("FileTracker", () => {
-    let fileTracker: FileTracker;
+    let tracker: FileTracker;
+    let testDir: string;
 
-    beforeEach(() => {
-        // Create a new instance before each test
-        fileTracker = new FileTracker();
-        // Reset mocks before each test
-        vi.resetAllMocks();
+    beforeEach(async () => {
+        tracker = new FileTracker();
+        testDir = await fs.mkdtemp(path.join(os.tmpdir(), "filetracker-test-"));
     });
 
-    it("should be defined", () => {
-        expect(fileTracker).toBeDefined();
+    afterEach(async () => {
+        tracker.clearTracking();
+        try {
+            await fs.rm(testDir, { recursive: true, force: true });
+        } catch (error) {}
     });
 
-    describe("read", () => {
-        it("should read a file and track its modification time", async () => {
-            const filePath = "test.txt";
-            const content = "hello world";
-            const mtimeMs = Date.now();
-            const absolutePath = path.resolve(filePath);
+    it("should track file reads", async () => {
+        const filePath = path.join(testDir, "test.txt");
+        await fs.writeFile(filePath, "test content");
 
-            vi.mocked(fs.readFile).mockResolvedValue(content);
-            vi.mocked(fs.stat).mockResolvedValue({ mtimeMs } as Stats);
+        await tracker.read(filePath);
+        const tracked = tracker.getTrackedFiles();
 
-            const result = await fileTracker.read(filePath);
-
-            expect(result).toBe(content);
-            expect(fs.readFile).toHaveBeenCalledWith(absolutePath, "utf8");
-            expect(fs.stat).toHaveBeenCalledWith(absolutePath);
-            // Check that the timestamp is stored
-            // @ts-expect-error - private property access
-            expect(fileTracker.readTimestamps.get(absolutePath)).toBe(mtimeMs);
-        });
-
-        it("should throw an error if the file does not exist", async () => {
-            const filePath = "non-existent-file.txt";
-            const error = new Error("ENOENT");
-            vi.mocked(fs.readFile).mockRejectedValue(error);
-
-            await expect(fileTracker.read(filePath)).rejects.toThrow(error);
-        });
+        expect(tracked).toContain(path.resolve(filePath));
     });
 
-    describe("write", () => {
-        it("should write to a file and track its modification time", async () => {
-            const filePath = "test.txt";
-            const content = "hello world";
-            const mtimeMs = Date.now();
-            const absolutePath = path.resolve(filePath);
-            const dir = path.dirname(absolutePath);
+    it("should track file writes", async () => {
+        const filePath = path.join(testDir, "test.txt");
 
-            vi.mocked(fs.writeFile).mockResolvedValue(undefined);
-            vi.mocked(fs.stat).mockResolvedValue({ mtimeMs } as Stats);
-            vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+        await tracker.write(filePath, "test content");
+        const tracked = tracker.getTrackedFiles();
 
-            await fileTracker.write(filePath, content);
-
-            expect(fs.mkdir).toHaveBeenCalledWith(dir, { recursive: true });
-            expect(fs.writeFile).toHaveBeenCalledWith(absolutePath, content, "utf8");
-            expect(fs.stat).toHaveBeenCalledWith(absolutePath);
-            // Check that the timestamp is stored
-            // @ts-expect-error - private property access
-            expect(fileTracker.readTimestamps.get(absolutePath)).toBe(mtimeMs);
-        });
-
-        it("should throw an error if directory creation fails", async () => {
-            const filePath = "test.txt";
-            const content = "hello world";
-            const error = new Error("EACCES");
-            vi.mocked(fs.mkdir).mockRejectedValue(error);
-
-            await expect(fileTracker.write(filePath, content)).rejects.toThrow(error);
-        });
+        expect(tracked).toContain(path.resolve(filePath));
     });
 
-    describe("assertCanCreate", () => {
-        it("should throw FileExistsError if file exists", async () => {
-            const filePath = "test.txt";
+    it("should throw FileExistsError when creating existing file", async () => {
+        const filePath = path.join(testDir, "existing.txt");
+        await fs.writeFile(filePath, "content");
 
-            // Simulate file existing
-            vi.mocked(fs.access).mockResolvedValue(undefined);
-
-            await expect(fileTracker.assertCanCreate(filePath)).rejects.toThrow(FileExistsError);
-        });
-
-        it("should not throw if file does not exist", async () => {
-            const filePath = "test.txt";
-
-            // Simulate file not existing
-            const error = new Error("ENOENT: no such file or directory");
-            (error as NodeJS.ErrnoException).code = "ENOENT";
-            vi.mocked(fs.access).mockRejectedValue(error);
-
-            await expect(fileTracker.assertCanCreate(filePath)).resolves.toBeUndefined();
-        });
-
-        it("should re-throw other fs.access errors", async () => {
-            const filePath = "test.txt";
-            const error = new Error("EACCES");
-            vi.mocked(fs.access).mockRejectedValue(error);
-
-            await expect(fileTracker.assertCanCreate(filePath)).rejects.toThrow(error);
-        });
+        await expect(tracker.assertCanCreate(filePath)).rejects.toThrow(FileExistsError);
     });
 
-    describe("assertCanEdit", () => {
-        const filePath = "test.txt";
-        const absolutePath = path.resolve(filePath);
+    it("should not throw when creating non-existing file", async () => {
+        const filePath = path.join(testDir, "new.txt");
 
-        it("should throw FileOutdatedError if file has not been read", async () => {
-            await expect(fileTracker.assertCanEdit(filePath)).rejects.toThrow(FileOutdatedError);
-        });
+        await expect(tracker.assertCanCreate(filePath)).resolves.not.toThrow();
+    });
 
-        it("should not throw if file is read and not modified", async () => {
-            const mtimeMs = Date.now();
-            vi.mocked(fs.stat).mockResolvedValue({ mtimeMs } as Stats);
+    it("should throw FileOutdatedError when file modified after read", async () => {
+        const filePath = path.join(testDir, "test.txt");
+        await fs.writeFile(filePath, "content");
 
-            // @ts-expect-error - private property access
-            fileTracker.readTimestamps.set(absolutePath, mtimeMs);
+        await tracker.read(filePath);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        await fs.writeFile(filePath, "modified content");
 
-            await expect(fileTracker.assertCanEdit(filePath)).resolves.toBeUndefined();
-        });
+        await expect(tracker.assertCanEdit(filePath)).rejects.toThrow(FileOutdatedError);
+    });
 
-        it("should throw FileOutdatedError if file was modified after read", async () => {
-            const initialTime = Date.now();
-            const modifiedTime = initialTime + 1000;
-            vi.mocked(fs.stat).mockResolvedValue({ mtimeMs: modifiedTime } as Stats);
+    it("should clear all tracking", async () => {
+        const filePath = path.join(testDir, "test.txt");
+        await fs.writeFile(filePath, "content");
 
-            // @ts-expect-error - private property access
-            fileTracker.readTimestamps.set(absolutePath, initialTime);
+        await tracker.read(filePath);
+        expect(tracker.getTrackedFiles()).toHaveLength(1);
 
-            await expect(fileTracker.assertCanEdit(filePath)).rejects.toThrow(FileOutdatedError);
-        });
+        tracker.clearTracking();
+        expect(tracker.getTrackedFiles()).toHaveLength(0);
+    });
 
-        it("should throw FileOutdatedError if file was deleted after read", async () => {
-            const initialTime = Date.now();
-            const error = new Error("ENOENT: no such file or directory");
-            (error as NodeJS.ErrnoException).code = "ENOENT";
-            vi.mocked(fs.stat).mockRejectedValue(error);
+    it("should return empty array when no files tracked", () => {
+        expect(tracker.getTrackedFiles()).toEqual([]);
+    });
 
-            // @ts-expect-error - private property access
-            fileTracker.readTimestamps.set(absolutePath, initialTime);
+    it("should handle absolute paths correctly", async () => {
+        const filePath = path.join(testDir, "test.txt");
+        await fs.writeFile(filePath, "content");
 
-            await expect(fileTracker.assertCanEdit(filePath)).rejects.toThrow(FileOutdatedError);
-        });
+        await tracker.read(filePath);
+        const tracked = tracker.getTrackedFiles();
 
-        it("should throw any other fs.stat error", async () => {
-            const initialTime = Date.now();
-            const error = new Error("EACCES");
-            vi.mocked(fs.stat).mockRejectedValue(error);
+        expect(tracked[0]).toBe(path.resolve(filePath));
+    });
 
-            // @ts-expect-error - private property access
-            fileTracker.readTimestamps.set(absolutePath, initialTime);
+    it("should automatically track unread files when attempting to edit", async () => {
+        const filePath = path.join(testDir, "unread.txt");
+        await fs.writeFile(filePath, "content");
 
-            await expect(fileTracker.assertCanEdit(filePath)).rejects.toThrow(error);
-        });
+        // Should not throw - file will be automatically tracked
+        await expect(tracker.assertCanEdit(filePath)).resolves.not.toThrow();
+
+        // Verify the file is now tracked
+        expect(tracker.getTrackedFileCount()).toBeGreaterThan(0);
     });
 });

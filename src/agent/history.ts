@@ -1,7 +1,3 @@
-// src/agent/history.ts
-// REFACTORED: This file now defines the rich, structured history for the agent.
-// This is a core concept from Octofriend that enables more intelligent UI and logic.
-
 import type { AssistantContent } from "ai";
 import type { ToolCall } from "./types.js";
 

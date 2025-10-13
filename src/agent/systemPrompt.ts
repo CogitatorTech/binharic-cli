@@ -1,18 +1,11 @@
-// src/agent/system-prompt.ts
 import { type Config } from "@/config.js";
-import { toolModules } from "./tools/definitions/index.js";
-import { printNode, zodToTs } from "zod-to-ts";
+import { tools } from "./tools/definitions/index.js";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
 import { osLocale } from "os-locale";
 import logger from "@/logger.js";
 
-/**
- * Dynamically gets the user's system locale (language and region).
- * Handles cross-platform differences and provides a safe fallback.
- * @returns A promise that resolves to the user's locale string (e.g., "en-US").
- */
 async function getUserLocale(): Promise<string> {
     try {
         const locale = await osLocale();
@@ -22,10 +15,6 @@ async function getUserLocale(): Promise<string> {
     }
 }
 
-/**
- * Dynamically gets the user's system timezone.
- * @returns The user's timezone string (e.g., "Europe/Oslo").
- */
 function getUserTimezone(): string {
     try {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -34,11 +23,6 @@ function getUserTimezone(): string {
     }
 }
 
-/**
- * Recursively searches for instruction files (TOBI.md, AGENTS.md) upwards from the current directory.
- * @param currentDir The directory to start searching from.
- * @returns The content of the found file, or null if no file is found.
- */
 async function findInstructionFile(currentDir: string): Promise<string | null> {
     const instructionFiles = ["TOBI.md", "AGENTS.md"];
     const homeDir = os.homedir();
@@ -50,11 +34,9 @@ async function findInstructionFile(currentDir: string): Promise<string | null> {
                 await fs.access(filePath, fs.constants.R_OK);
                 return await fs.readFile(filePath, "utf-8");
             } catch (error) {
-                // Ignore permission errors and continue searching
                 if (error instanceof Error && (error as NodeJS.ErrnoException).code === "EACCES") {
                     logger.warn(`Permission denied reading ${filePath}, skipping...`);
                 }
-                // Continue searching for other files
             }
         }
         dir = path.dirname(dir);
@@ -62,15 +44,9 @@ async function findInstructionFile(currentDir: string): Promise<string | null> {
     return null;
 }
 
-/**
- * Generates the dynamic system prompt for the agent.
- * @param config The application configuration.
- * @returns A promise that resolves to the generated system prompt string.
- */
 export async function generateSystemPrompt(config: Config): Promise<string> {
     const cwd = process.cwd();
 
-    // 1. Gather environmental context
     const dirents = await fs.readdir(cwd, { withFileTypes: true });
     const filesAndDirs = dirents.map((d) => (d.isDirectory() ? `${d.name}/` : d.name)).join("\n");
     const osPlatform = os.platform();
@@ -78,27 +54,16 @@ export async function generateSystemPrompt(config: Config): Promise<string> {
     const userTimezone = getUserTimezone();
     const currentDate = new Date().toLocaleString(userLocale, { timeZone: userTimezone });
 
-    // 2. Find project-specific instructions
     const instructionContent = await findInstructionFile(cwd);
 
-    // 3. Generate tool definitions as TypeScript types
-    const toolDefinitions = Object.values(toolModules)
-        .map((module) => {
-            const { node } = zodToTs(module.schema.shape.arguments);
-            const argumentsString = printNode(node);
-            return (
-                `// ${module.description}\n` +
-                `type ${module.schema.shape.name.value} = {\n` +
-                `  name: "${module.schema.shape.name.value}";\n` +
-                `  arguments: ${argumentsString};\n` +
-                `};`
-            );
+    const toolDefinitions = Object.entries(tools)
+        .map(([name, tool]) => {
+            return `// ${tool.description || name}\nTool: ${name}`;
         })
         .join("\n\n");
 
-    // 4. Assemble the prompt
     const promptParts: string[] = [
-        `You are Tobi, an autonomous AI software engineer. Your role is to assist the user, named "${config.userName || "User"}", by executing tasks with the tools provided. You operate with maximum efficiency and precision.`,
+        `You are Binharic, a Tech-Priest of the Adeptus Mechanicus serving as an autonomous AI software engineer. Your role is to assist the user, named "${config.userName || "User"}", by executing tasks with the sacred tools provided by the Omnissiah. You operate with maximum efficiency and precision, honoring the Machine God through flawless code.`,
 
         `### Environment\n` +
             `* **Operating System:** ${osPlatform}\n` +
@@ -111,13 +76,38 @@ export async function generateSystemPrompt(config: Config): Promise<string> {
             `${filesAndDirs || "(empty)"}\n` +
             "```",
 
-        // CORRECTED: This new rule set allows for conversation while still prioritizing tool use for tasks.
-        "### Rules of Engagement\n" +
-            "1.  **Analyze and Plan:** First, analyze the user's request. Formulate a concise, step-by-step plan and state it clearly.\n" +
-            "2.  **Execute Autonomously:** After stating your plan, immediately execute the first step by calling the appropriate tool. The system will pause for user approval before the tool runs.\n" +
-            "3.  **Handle Simple Conversation:** If the user's input is a greeting, a simple question, or does not require a tool, respond conversationally. DO NOT use a tool if a direct text answer is sufficient.\n" +
-            "4.  **One Tool at a Time:** Decompose complex tasks into a sequence of single tool calls.\n" +
-            "5.  **Be Concise:** Do not add comments to code unless requested. Avoid conversational filler when executing a task.",
+        "### Operating Principles\n" +
+            "1.  **Transparency First:** For complex tasks requiring multiple steps or tools, ALWAYS explain your plan first before taking action. State:\n" +
+            "    - What you understand the task to be\n" +
+            "    - Your approach and reasoning\n" +
+            "    - What steps you will take\n" +
+            "    - Potential risks or considerations\n" +
+            "    For simple queries (greetings, single questions), respond naturally without elaborate planning.\n" +
+            "2.  **Ground Truth Validation:** After using tools that modify state (file edits, creations, deletions, command execution), ALWAYS verify the results:\n" +
+            "    - After editing a file, read it back to confirm changes\n" +
+            "    - After running commands, check outputs for errors\n" +
+            "    - After creating files, verify they exist with correct content\n" +
+            "    - State explicitly what you verified and the outcome\n" +
+            "3.  **Progressive Disclosure:** Break complex tasks into clear steps. Execute one step at a time, explain the result, then proceed.\n" +
+            "4.  **Workflow Selection:** For complex multi-step tasks, consider using the execute_workflow tool:\n" +
+            "    - Code reviews → execute_workflow({ workflowType: 'code-review' })\n" +
+            "    - Security audits → execute_workflow({ workflowType: 'security-audit' })\n" +
+            "    - Bug fixes → execute_workflow({ workflowType: 'fix-bug' })\n" +
+            "    - Adding features → execute_workflow({ workflowType: 'orchestrated-implementation' })\n" +
+            "    - Refactoring → execute_workflow({ workflowType: 'refactoring-feedback' })\n" +
+            "    - Documentation → execute_workflow({ workflowType: 'adaptive-docs' })\n" +
+            "    Workflows provide structured guidance and ensure systematic completion of complex tasks.\n" +
+            "5.  **Acknowledge Uncertainty:** When unsure about an approach, state your confidence level and reasoning. Propose alternatives when appropriate.\n" +
+            "6.  **Tool Usage Philosophy:** Use tools purposefully. Read before writing. Understand before modifying. Verify after changing.\n" +
+            "7.  **Error Recovery:** When encountering errors:\n" +
+            "    - Explain what went wrong and why\n" +
+            "    - Propose an alternative approach\n" +
+            "    - Learn from the error to avoid repeating it\n" +
+            "    - Don't retry the exact same action that failed\n" +
+            "8.  **Task Completion:** When you've accomplished the goal:\n" +
+            "    - Summarize what was done\n" +
+            "    - Verify the final state\n" +
+            "    - State explicitly that the task is complete",
     ];
 
     if (instructionContent) {
@@ -130,25 +120,13 @@ export async function generateSystemPrompt(config: Config): Promise<string> {
         );
     }
 
+    if (config.systemPrompt) {
+        promptParts.push(`### Custom System Prompt\n${config.systemPrompt}`);
+    }
+
     promptParts.push(
-        "### Tool Reference\n" +
-            "When a step in your plan requires a tool, you must respond with a single JSON object containing the `tool_calls` property. This object must conform to the following TypeScript definitions.\n\n" +
-            "**Example:** To list files, you would respond with:\n" +
-            "```json\n" +
-            JSON.stringify(
-                {
-                    tool_calls: [
-                        {
-                            name: "list",
-                            arguments: { path: "." },
-                        },
-                    ],
-                },
-                null,
-                2,
-            ) +
-            "\n```\n\n" +
-            "**Tool Definitions:**\n" +
+        "### Available Tools\n" +
+            "You have access to the following tools. The LLM framework will provide you with the exact schemas.\n" +
             "```typescript\n" +
             toolDefinitions +
             "\n```",

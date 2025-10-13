@@ -7,6 +7,7 @@ import TextInput from "ink-text-input";
 import { useStore } from "@/agent/state.js";
 import { useShallow } from "zustand/react/shallow";
 import { FileSearch } from "./FileSearch.js";
+import { HighlightedInput } from "./HighlightedInput.js";
 import { runTool } from "@/agent/tools/index.js";
 
 const MAX_VISIBLE_FILES = 5;
@@ -14,7 +15,6 @@ const MAX_VISIBLE_FILES = 5;
 export function UserInput() {
     const [useStateInput, setInputValue] = useState("");
     const [searchActive, setSearchActive] = useState(false);
-    // ... (other state hooks remain the same) ...
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<string[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -33,6 +33,7 @@ export function UserInput() {
         setSystemPrompt,
         setModel,
         addCommandToHistory,
+        addContextFile,
         config,
     } = useStore(
         useShallow((s) => ({
@@ -48,6 +49,7 @@ export function UserInput() {
             setSystemPrompt: s.actions.setSystemPrompt,
             setModel: s.actions.setModel,
             addCommandToHistory: s.actions.addCommandToHistory,
+            addContextFile: s.actions.addContextFile,
             config: s.config,
         })),
     );
@@ -56,7 +58,9 @@ export function UserInput() {
     // CORRECTED: The 'thinking' status is now 'responding'.
     const isAgentBusy = status === "responding" || status === "executing-tool";
 
-    // ... (the rest of the component's logic and hooks remain the same) ...
+    // Allow typing at all times, but prevent new agent requests while busy
+    const canSubmitNewRequest = status === "idle" || status === "error";
+
     useEffect(() => {
         const lastAtIndex = useStateInput.lastIndexOf("@");
         if (lastAtIndex !== -1) {
@@ -79,7 +83,7 @@ export function UserInput() {
             const debounce = setTimeout(() => {
                 if (searchQuery) {
                     runTool({ toolName: "search", args: { query: searchQuery } }, config!)
-                        .then((result) => {
+                        .then((result: unknown) => {
                             const files = (result as string).split("\n").filter(Boolean);
                             setSearchResults(files);
                         })
@@ -107,18 +111,22 @@ export function UserInput() {
                     return newIndex < searchResults.length ? newIndex : prev;
                 });
             }
-        } else if (!isAgentBusy) {
-            if (key.upArrow) {
-                const prevCommand = getPreviousCommand();
-                if (prevCommand) {
-                    setInputValue(prevCommand);
-                }
-            } else if (key.downArrow) {
-                const nextCommand = getNextCommand();
-                setInputValue(nextCommand ?? "");
-            } else if (key.ctrl && input === "l") {
-                clearOutput();
+            return;
+        }
+
+        // Allow command history navigation at all times
+        if (key.upArrow) {
+            const prevCommand = getPreviousCommand();
+            if (prevCommand !== null) {
+                setInputValue(prevCommand);
             }
+        } else if (key.downArrow) {
+            const nextCommand = getNextCommand();
+            if (nextCommand !== null) {
+                setInputValue(nextCommand);
+            }
+        } else if (key.ctrl && input === "l") {
+            clearOutput();
         }
     });
 
@@ -145,7 +153,7 @@ export function UserInput() {
             if (file) {
                 try {
                     const content = await runTool(
-                        { toolName: "readFile", args: { path: file } },
+                        { toolName: "read_file", args: { path: file } },
                         config!,
                     );
                     const fileBlock = `File: ${file}\n\n${content}`;
@@ -162,11 +170,11 @@ export function UserInput() {
             return;
         }
 
-        if (value && !isAgentBusy) {
+        if (value && canSubmitNewRequest) {
             addCommandToHistory(value);
             if (value.startsWith("/")) {
                 const [command, ...args] = value.slice(1).split(" ");
-                const rest = args.join(" ");
+                const rest = args.join(" ").trim();
                 switch (command) {
                     case "clear":
                         clearOutput();
@@ -183,6 +191,14 @@ export function UserInput() {
                     case "model":
                         setModel(rest);
                         break;
+                    case "add": {
+                        if (rest.length > 0) {
+                            rest.split(/\s+/)
+                                .filter(Boolean)
+                                .forEach((p) => addContextFile(p));
+                        }
+                        break;
+                    }
                     default:
                         startAgent(value);
                         break;
@@ -215,6 +231,12 @@ export function UserInput() {
                     totalFiles={searchResults.length}
                     selectedIndex={selectedIndex}
                 />
+            )}
+            {/* Show highlighted preview when typing a command */}
+            {useStateInput.startsWith("/") && useStateInput.length > 1 && (
+                <Box marginBottom={1}>
+                    <HighlightedInput value={useStateInput} placeholder="" />
+                </Box>
             )}
             <Box borderStyle="round" borderColor="blue" marginTop={1}>
                 <Text>&gt; </Text>

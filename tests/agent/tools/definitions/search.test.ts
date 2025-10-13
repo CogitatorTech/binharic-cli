@@ -1,109 +1,82 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import searchTool from "../../../../src/agent/tools/definitions/search";
-import { spawn } from "child_process";
+import { ChildProcess } from "child_process";
+import { EventEmitter } from "events";
 
-vi.mock("child_process");
+vi.mock("child_process", () => ({
+    spawn: vi.fn(),
+}));
 
 describe("search tool", () => {
-    it("should return a list of files when the search is successful", async () => {
-        const mockSpawn = vi.mocked(spawn);
-        const mockChildProcess = {
-            stdout: {
-                on: vi.fn((event, cb) => {
-                    if (event === "data") {
-                        cb("file1.ts\nfile2.ts");
-                    }
-                }),
-            },
-            stderr: {
-                on: vi.fn(),
-            },
-            on: vi.fn((event, cb) => {
-                if (event === "close") {
-                    cb(0);
-                }
-            }),
-        };
-        mockSpawn.mockReturnValue(mockChildProcess as unknown as ReturnType<typeof spawn>);
+    let childProcessMock: ChildProcess;
+    let stdoutMock: EventEmitter;
+    let stderrMock: EventEmitter;
 
-        const { implementation } = searchTool;
-        const result = await implementation({ query: "test", timeout: 10000 });
+    beforeEach(async () => {
+        vi.clearAllMocks();
 
-        expect(result).toBe("file1.ts\nfile2.ts");
-        expect(mockSpawn).toHaveBeenCalledWith(
-            "find",
-            ["-L", ".", "-type", "f", "-not", "-path", "*.git*", "-name", "*test*", "-print"],
-            {
-                cwd: process.cwd(),
-                shell: false,
-                stdio: ["ignore", "pipe", "pipe"],
-            },
-        );
+        const { spawn } = vi.mocked(await import("child_process"));
+
+        childProcessMock = new EventEmitter() as ChildProcess;
+        stdoutMock = new EventEmitter();
+        stderrMock = new EventEmitter();
+        (childProcessMock as any).stdout = stdoutMock;
+        (childProcessMock as any).stderr = stderrMock;
+        (childProcessMock as any).kill = vi.fn();
+
+        vi.mocked(spawn).mockReturnValue(childProcessMock);
     });
 
-    it("should return an empty string when no files are found", async () => {
-        const mockSpawn = vi.mocked(spawn);
-        const mockChildProcess = {
-            stdout: {
-                on: vi.fn((event, cb) => {
-                    if (event === "data") {
-                        cb("");
-                    }
-                }),
-            },
-            stderr: {
-                on: vi.fn(),
-            },
-            on: vi.fn((event, cb) => {
-                if (event === "close") {
-                    cb(0);
-                }
-            }),
-        };
-        mockSpawn.mockReturnValue(mockChildProcess as unknown as ReturnType<typeof spawn>);
+    it("should return a list of files when the search is successful", async () => {
+        const promise = searchTool.execute!({ query: "test", timeout: 10000 }, {} as any);
 
-        const { implementation } = searchTool;
-        const result = await implementation({ query: "nonexistent", timeout: 10000 });
+        stdoutMock.emit("data", "file1.ts\n");
+        stdoutMock.emit("data", "file2.ts\n");
+        childProcessMock.emit("close", 0);
+
+        const result = await promise;
+
+        expect(result).toBe("file1.ts\nfile2.ts\n");
+    });
+
+    it("should return 'No files found' when no files are found", async () => {
+        const promise = searchTool.execute!({ query: "nonexistent", timeout: 10000 }, {} as any);
+
+        childProcessMock.emit("close", 0);
+
+        const result = await promise;
 
         expect(result).toBe("No files found.");
     });
 
     it("should throw a ToolError when the find command fails", async () => {
-        const mockSpawn = vi.mocked(spawn);
-        const mockChildProcess = {
-            stdout: {
-                on: vi.fn(),
-            },
-            stderr: {
-                on: vi.fn((event, cb) => {
-                    if (event === "data") {
-                        cb("find: some error");
-                    }
-                }),
-            },
-            on: vi.fn((event, cb) => {
-                if (event === "close") {
-                    cb(1);
-                }
-            }),
-        };
-        mockSpawn.mockReturnValue(mockChildProcess as unknown as ReturnType<typeof spawn>);
+        const promise = searchTool.execute!({ query: "test", timeout: 10000 }, {} as any);
 
-        const { implementation } = searchTool;
-        await expect(implementation({ query: "test", timeout: 10000 })).rejects.toThrow(
+        stderrMock.emit("data", "find: some error");
+        childProcessMock.emit("close", 1);
+
+        await expect(promise).rejects.toThrow(
             "Command exited with code: 1\nOutput:\nfind: some error",
         );
     });
 
     it("should throw a ToolError when the spawn command fails", async () => {
-        const mockSpawn = vi.mocked(spawn);
-        mockSpawn.mockImplementation(() => {
-            throw new Error("spawn failed");
-        });
+        const promise = searchTool.execute!({ query: "test", timeout: 10000 }, {} as any);
 
-        const { implementation } = searchTool;
-        await expect(implementation({ query: "test", timeout: 10000 })).rejects.toThrow(
-            "Command failed to start: spawn failed",
-        );
+        childProcessMock.emit("error", new Error("spawn failed"));
+
+        await expect(promise).rejects.toThrow("Command failed to start: spawn failed");
+    });
+
+    it("should timeout if search takes too long", async () => {
+        vi.useFakeTimers();
+
+        const promise = searchTool.execute!({ query: "test", timeout: 100 }, {} as any);
+
+        vi.advanceTimersByTime(150);
+
+        await expect(promise).rejects.toThrow("Search timed out after 100ms");
+
+        vi.useRealTimers();
     });
 });

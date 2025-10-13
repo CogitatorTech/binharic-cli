@@ -1,6 +1,3 @@
-// src/agent/autofix.ts
-// CORRECTED: Adjusted the function signature to resolve the complex generic type error with streamObject.
-
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamObject } from "ai";
 import { z, ZodRawShape } from "zod";
@@ -23,7 +20,6 @@ Invalid JSON:
 ${badJson}
 `;
 
-// The schema is now constrained to `z.ZodObject<ZodRawShape>`, which is more compatible with the AI SDK.
 export async function autofixJson(
     schema: z.ZodObject<ZodRawShape>,
     brokenJson: string,
@@ -32,13 +28,16 @@ export async function autofixJson(
     if (!fixer) return null;
 
     try {
-        // The call to streamObject now works with the simplified type.
         const { object } = await streamObject({
             model: fixer,
             prompt: fixJsonPrompt(brokenJson),
             schema: schema,
+            schemaName: "FixedJsonObject",
+            schemaDescription: "The corrected JSON object that conforms to the expected schema",
+            onError({ error }) {
+                logger.error("Error during JSON autofix streaming:", error);
+            },
         });
-        // We still parse here to ensure the final object conforms to the specific schema passed in.
         const result = await object;
         return schema.parse(result);
     } catch (e) {
@@ -69,8 +68,16 @@ Respond ONLY with the JSON object.
 `;
 
 const autofixEditSchema = z.object({
-    success: z.boolean(),
-    correctedSearch: z.string().optional(),
+    success: z.boolean().describe("Whether the search string was successfully corrected"),
+    correctedSearch: z
+        .string()
+        .optional()
+        .describe("The exact corrected search string that exists in the file"),
+    confidence: z
+        .enum(["high", "medium", "low"])
+        .optional()
+        .describe("Confidence level of the correction"),
+    explanation: z.string().optional().describe("Brief explanation of what was corrected"),
 });
 
 export async function autofixEdit(
@@ -81,18 +88,42 @@ export async function autofixEdit(
     if (!fixer) return null;
 
     try {
-        const { object } = await streamObject({
-            model: fixer,
-            prompt: fixEditPrompt(fileContent, incorrectSearch),
-            schema: autofixEditSchema,
+        logger.info("Attempting to autofix edit search string...");
+
+        // Add timeout protection
+        const timeoutPromise = new Promise<null>((_, reject) => {
+            setTimeout(() => reject(new Error("Autofix timeout after 10 seconds")), 10000);
         });
 
-        const result = await object;
+        const autofixPromise = (async () => {
+            const result = await streamObject({
+                model: fixer,
+                prompt: fixEditPrompt(fileContent, incorrectSearch),
+                schema: autofixEditSchema,
+                schemaName: "EditAutofix",
+                schemaDescription:
+                    "Result of attempting to correct a search string for file editing",
+                onError({ error }) {
+                    logger.error("Error during edit autofix streaming:", error);
+                },
+            });
+
+            return await result.object;
+        })();
+
+        const result = await Promise.race([autofixPromise, timeoutPromise]);
+
+        if (!result) {
+            logger.warn("Autofix timed out");
+            return null;
+        }
 
         if (result.success && result.correctedSearch) {
-            // Final check to ensure the corrected search is actually in the file
             if (fileContent.includes(result.correctedSearch)) {
-                logger.info("Autofix for edit successful.");
+                logger.info("Autofix for edit successful.", {
+                    confidence: result.confidence,
+                    explanation: result.explanation,
+                });
                 return result.correctedSearch;
             }
             logger.warn("Autofix for edit returned a search string not present in the file.");

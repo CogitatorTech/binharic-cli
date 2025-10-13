@@ -33,6 +33,23 @@ vi.mock("ai", async (importOriginal) => {
 });
 
 describe("createLlmProvider", () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+        // Mock environment variables for testing
+        process.env = {
+            ...originalEnv,
+            OPENAI_API_KEY: "test-openai-key",
+            GOOGLE_API_KEY: "test-google-key",
+            ANTHROPIC_API_KEY: "test-anthropic-key",
+        };
+    });
+
+    afterEach(() => {
+        // Restore original environment
+        process.env = originalEnv;
+    });
+
     it("should create an ollama provider", () => {
         const modelConfig: ModelConfig = {
             name: "test-model",
@@ -80,6 +97,9 @@ describe("createLlmProvider", () => {
         const config: Config = {
             defaultModel: "test-model",
             models: [modelConfig],
+            apiKeys: {
+                google: "GOOGLE_API_KEY",
+            },
         };
 
         createLlmProvider(modelConfig, config);

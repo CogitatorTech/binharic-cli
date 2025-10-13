@@ -1,19 +1,20 @@
 // src/ui/ContextSummaryDisplay.tsx
 import React from "react";
 import { Box, Text } from "ink";
+import { useStore } from "@/agent/state.js";
 
 export function ContextSummaryDisplay() {
-    // For now, this is a placeholder.
-    // In the future, this will come from the agent's state.
-    const tobiMdFileCount = 0;
-    const contextFileNames: string[] = [];
+    const contextFiles = useStore((s) => s.contextFiles);
+
+    const count = contextFiles.length;
+    const names = contextFiles.map((p) => p.split("/").pop()).filter(Boolean) as string[];
 
     return (
         <Box marginBottom={1}>
             <Text color="gray">
-                {tobiMdFileCount > 0
-                    ? `Reading ${tobiMdFileCount} context file(s): ${contextFileNames.join(", ")}`
-                    : "No context files loaded. Add files with /add or create a TOBI.md or AGENT.md file."}
+                {count > 0
+                    ? `Reading ${count} context file(s): ${names.join(", ")}`
+                    : "No context files loaded. Add files with /add or create a BINHARIC.md or AGENT.md file."}
             </Text>
         </Box>
     );

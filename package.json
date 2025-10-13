@@ -1,7 +1,7 @@
 {
-  "name": "tobi-coding-assistant",
+  "name": "binharic-cli",
   "version": "0.1.0",
-  "description": "An AI coding assistant.",
+  "description": "An AI coding assistant blessed by the Omnissiah.",
   "main": "dist/cli.js",
   "type": "module",
   "scripts": {

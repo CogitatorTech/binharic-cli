@@ -20,6 +20,39 @@ function serializeContent(content: unknown): string {
     return String(content);
 }
 
+function getMessageTokenCount(message: ModelMessage): number {
+    let tokens = 0;
+
+    if (typeof message.content === "string") {
+        tokens += getTokenCount(message.content);
+    } else if (Array.isArray(message.content)) {
+        for (const part of message.content) {
+            if ("text" in part && typeof part.text === "string") {
+                tokens += getTokenCount(part.text);
+            } else if ("output" in part && part.output) {
+                if (typeof part.output === "object" && "value" in part.output) {
+                    tokens += getTokenCount(serializeContent(part.output.value));
+                } else {
+                    tokens += getTokenCount(serializeContent(part.output));
+                }
+            } else if ("toolName" in part && typeof part.toolName === "string") {
+                tokens += getTokenCount(part.toolName);
+                if ("args" in part && part.args) {
+                    tokens += getTokenCount(serializeContent(part.args));
+                }
+            } else {
+                tokens += getTokenCount(serializeContent(part));
+            }
+        }
+    } else {
+        tokens += getTokenCount(serializeContent(message.content));
+    }
+
+    tokens += 4;
+
+    return tokens;
+}
+
 export function applyContextWindow(
     history: ModelMessage[],
     modelConfig: ModelConfig,
@@ -29,25 +62,7 @@ export function applyContextWindow(
 
     let totalTokens = 0;
     for (const message of history) {
-        if (typeof message.content === "string") {
-            totalTokens += getTokenCount(message.content);
-        } else if (Array.isArray(message.content)) {
-            // Handle content arrays (tool results, etc.)
-            for (const part of message.content) {
-                if ("text" in part && typeof part.text === "string") {
-                    totalTokens += getTokenCount(part.text);
-                } else if ("value" in part) {
-                    // Handle tool-result value field
-                    totalTokens += getTokenCount(serializeContent(part.value));
-                } else {
-                    // Fallback for any other content type
-                    totalTokens += getTokenCount(serializeContent(part));
-                }
-            }
-        } else {
-            // Handle any other complex content types
-            totalTokens += getTokenCount(serializeContent(message.content));
-        }
+        totalTokens += getMessageTokenCount(message);
     }
 
     if (totalTokens <= safeContextLimit) {
@@ -63,29 +78,13 @@ export function applyContextWindow(
 
     const trimmedHistory = [...history];
 
-    // Always preserve the system prompt (if it's the first message)
     const hasSystemPrompt = trimmedHistory[0]?.role === "system";
     const startIndex = hasSystemPrompt ? 1 : 0;
 
     while (totalTokens > safeContextLimit && trimmedHistory.length > startIndex + 1) {
         const removedMessage = trimmedHistory.splice(startIndex, 1)[0];
         if (removedMessage) {
-            let removedTokens = 0;
-            if (typeof removedMessage.content === "string") {
-                removedTokens = getTokenCount(removedMessage.content);
-            } else if (Array.isArray(removedMessage.content)) {
-                for (const part of removedMessage.content) {
-                    if ("text" in part && typeof part.text === "string") {
-                        removedTokens += getTokenCount(part.text);
-                    } else if ("value" in part) {
-                        removedTokens += getTokenCount(serializeContent(part.value));
-                    } else {
-                        removedTokens += getTokenCount(serializeContent(part));
-                    }
-                }
-            } else {
-                removedTokens = getTokenCount(serializeContent(removedMessage.content));
-            }
+            const removedTokens = getMessageTokenCount(removedMessage);
             totalTokens -= removedTokens;
             logger.info(
                 `Removed message at index ${startIndex} to save ${removedTokens} tokens. New total: ${totalTokens}`,

@@ -33,17 +33,23 @@ export function ToolConfirmation() {
             paddingX={1}
             marginTop={1}
         >
-            <Text bold>Tobi wants to run the following tool(s):</Text>
-            {pendingToolRequest.calls.map((call) => (
-                <Box key={call.toolCallId} flexDirection="column" marginLeft={2}>
-                    <Text color="yellow">
-                        › {call.toolName}({JSON.stringify(call.input)})
-                    </Text>
-                </Box>
-            ))}
-            {/* CORRECTED: Wrapped Text in a Box to apply margin */}
+            <Text bold>
+                ⚙️ The Tech-Priest seeks authorization to perform the following sacred rites:
+            </Text>
+            {pendingToolRequest.calls.map((call) => {
+                const args = (call as any).args || (call as any).input || {};
+                const argsStr = Object.keys(args).length > 0 ? JSON.stringify(args, null, 0) : "{}";
+
+                return (
+                    <Box key={call.toolCallId} flexDirection="column" marginLeft={2}>
+                        <Text color="yellow">
+                            › {call.toolName}({argsStr})
+                        </Text>
+                    </Box>
+                );
+            })}
             <Box marginTop={1}>
-                <Text color="gray">Press ENTER to approve, or ESC to reject.</Text>
+                <Text color="gray">Press ENTER to grant blessing | ESC to deny the ritual</Text>
             </Box>
         </Box>
     );

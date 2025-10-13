@@ -9,6 +9,7 @@ import { Header } from "./Header.js";
 import { HelpMenu } from "./HelpMenu.js";
 import { ContextSummaryDisplay } from "./ContextSummaryDisplay.js";
 import { ToolConfirmation } from "./ToolConfirmation.js";
+import { CheckpointConfirmation } from "./CheckpointConfirmation.js";
 
 export default function App() {
     const { loadInitialConfig, helpMenuOpen, status, clearError } = useStore(
@@ -40,8 +41,14 @@ export default function App() {
                 {helpMenuOpen && <HelpMenu />}
                 <ContextSummaryDisplay />
 
-                {/* NEW: Conditionally render UserInput or ToolConfirmation */}
-                {status === "tool-request" ? <ToolConfirmation /> : <UserInput />}
+                {/* Conditionally render UserInput, ToolConfirmation, or CheckpointConfirmation */}
+                {status === "checkpoint-request" ? (
+                    <CheckpointConfirmation />
+                ) : status === "tool-request" ? (
+                    <ToolConfirmation />
+                ) : (
+                    <UserInput />
+                )}
 
                 <Footer />
             </Box>

@@ -1,9 +1,10 @@
 import { create } from "zustand";
+import { randomUUID } from "crypto";
 import logger from "@/logger.js";
-import { streamAssistantResponse } from "./llm.js";
+import { streamAssistantResponse, checkProviderAvailability } from "./llm.js";
 import { generateSystemPrompt } from "./systemPrompt.js";
 import { runTool } from "./tools/index.js";
-import { type Config, HISTORY_PATH, loadConfig, saveConfig } from "@/config.js";
+import { type Config, type ModelConfig, getHistoryPath, loadConfig, saveConfig } from "@/config.js";
 import { FatalError, TransientError } from "./errors.js";
 import fsSync from "fs";
 import path from "path";
@@ -11,9 +12,25 @@ import simpleGit from "simple-git";
 import { HistoryItem, ToolRequestItem } from "./history.js";
 import type { ModelMessage } from "ai";
 import { applyContextWindow } from "./contextWindow.js";
+import type { CheckpointRequest } from "./checkpoints.js";
+
+const SAFE_AUTO_TOOLS = new Set([
+    "read_file",
+    "list",
+    "search",
+    "grep_search",
+    "get_errors",
+    "get_terminal_output",
+    "validate",
+    "read_multiple_files",
+    "git_status",
+    "git_log",
+    "git_diff",
+]);
 
 function loadCommandHistory(): string[] {
     try {
+        const HISTORY_PATH = getHistoryPath();
         if (!fsSync.existsSync(HISTORY_PATH)) {
             fsSync.mkdirSync(path.dirname(HISTORY_PATH), { recursive: true });
         }
@@ -24,16 +41,53 @@ function loadCommandHistory(): string[] {
     }
 }
 
+function validateModelApiKey(modelConfig: ModelConfig, config: Config): void {
+    if (modelConfig.provider === "ollama") {
+        logger.info("Using Ollama (local) - no API key validation needed");
+        return;
+    }
+
+    const keyName =
+        config.apiKeys?.[modelConfig.provider] || `${modelConfig.provider.toUpperCase()}_API_KEY`;
+    const apiKey = process.env[keyName];
+
+    if (!apiKey || apiKey.trim() === "") {
+        const providerNames: Record<string, string> = {
+            openai: "OpenAI",
+            google: "Google AI",
+            anthropic: "Anthropic (Claude)",
+        };
+
+        logger.warn(
+            `API key not found for ${modelConfig.provider}. ` +
+                `Expected environment variable: ${keyName}. ` +
+                `Model: ${modelConfig.name}, Provider: ${providerNames[modelConfig.provider]}`,
+        );
+    } else {
+        logger.info(`API key found for ${modelConfig.provider}`);
+    }
+}
+
 type AppState = {
     history: HistoryItem[];
     commandHistory: string[];
     commandHistoryIndex: number;
-    status: "initializing" | "idle" | "responding" | "tool-request" | "executing-tool" | "error";
+    status:
+        | "initializing"
+        | "idle"
+        | "responding"
+        | "tool-request"
+        | "checkpoint-request"
+        | "executing-tool"
+        | "error"
+        | "interrupted";
     error: string | null;
     config: Config | null;
     helpMenuOpen: boolean;
     branchName: string;
     pendingToolRequest: ToolRequestItem | null;
+    pendingCheckpoint: CheckpointRequest | null;
+    contextFiles: string[];
 };
 
 type AppActions = {
@@ -42,8 +96,11 @@ type AppActions = {
         updateBranchName: () => Promise<void>;
         startAgent: (input: string) => Promise<void>;
         _runAgentLogic: (retryCount?: number) => Promise<void>;
+        stopAgent: () => void;
         confirmToolExecution: () => Promise<void>;
         rejectToolExecution: () => void;
+        confirmCheckpoint: () => void;
+        rejectCheckpoint: () => void;
         openHelpMenu: () => void;
         closeHelpMenu: () => void;
         clearOutput: () => void;
@@ -54,11 +111,19 @@ type AppActions = {
         getNextCommand: () => string | null;
         setSystemPrompt: (prompt: string) => void;
         setModel: (modelName: string) => void;
+        addContextFile: (path: string) => void;
+        clearContextFiles: () => void;
     };
 };
 
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 1000;
+const MAX_CONSECUTIVE_ERRORS = 5;
+
+let consecutiveErrors = 0;
+let activeStreamTimeout: NodeJS.Timeout | null = null;
+let isAgentRunning = false;
+let shouldStopAgent = false;
 
 export const useStore = create<AppState & AppActions>((set, get) => ({
     history: [],
@@ -70,14 +135,51 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
     helpMenuOpen: false,
     branchName: "unknown",
     pendingToolRequest: null,
+    pendingCheckpoint: null,
+    contextFiles: [],
     actions: {
         loadInitialConfig: async () => {
             logger.info("Loading initial configuration.");
             try {
                 const config = await loadConfig();
                 set({ config, status: "idle" });
-                logger.info("Configuration loaded successfully.");
                 await get().actions.updateBranchName();
+
+                logger.info("Checking provider availability...");
+                const providerCheck = await checkProviderAvailability(config);
+
+                if (!providerCheck.available) {
+                    const technicalDetails =
+                        `No LLM providers are available. ` +
+                        `Unavailable providers: ${providerCheck.unavailableProviders.join(", ")}`;
+
+                    logger.error(technicalDetails);
+
+                    const userMessage = `No LLM providers configured. Please check logs for details.`;
+
+                    set({ error: userMessage, status: "error" });
+                    process.exit(1);
+                }
+
+                logger.info(`Available providers: ${providerCheck.availableProviders.join(", ")}`);
+
+                if (providerCheck.unavailableProviders.length > 0) {
+                    logger.warn(
+                        `Unavailable providers: ${providerCheck.unavailableProviders.join(", ")}`,
+                    );
+                }
+
+                const modelConfig = config.models.find((m) => m.name === config.defaultModel);
+                if (modelConfig) {
+                    validateModelApiKey(modelConfig, config);
+                }
+
+                const autoContextFiles = ["BINHARIC.md", "AGENT.md"]
+                    .map((p) => path.resolve(p))
+                    .filter((p) => fsSync.existsSync(p));
+                if (autoContextFiles.length > 0) {
+                    set({ contextFiles: autoContextFiles });
+                }
             } catch (error) {
                 const errorMessage =
                     error instanceof Error ? error.message : "An unknown error occurred.";
@@ -113,10 +215,10 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
             logger.info("Clearing command history.");
             set({ commandHistory: [], commandHistoryIndex: 0 });
             try {
+                const HISTORY_PATH = getHistoryPath();
                 fsSync.writeFileSync(HISTORY_PATH, "");
             } catch (err) {
                 logger.error("Failed to clear history file:", err);
-                console.error("Failed to clear history file:", err);
             }
         },
         clearError: () => {
@@ -135,10 +237,10 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                 commandHistoryIndex: newCommandHistory.length,
             });
             try {
+                const HISTORY_PATH = getHistoryPath();
                 fsSync.appendFileSync(HISTORY_PATH, command + "\n");
             } catch (err) {
                 logger.error("Failed to write to history file:", err);
-                console.error("Failed to write to history file:", err);
             }
         },
         getPreviousCommand: () => {
@@ -169,7 +271,9 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
             if (config) {
                 const newConfig = { ...config, systemPrompt: prompt };
                 set({ config: newConfig });
-                saveConfig(newConfig);
+                saveConfig(newConfig).catch((err) => {
+                    logger.error("Failed to save config after setting system prompt:", err);
+                });
             }
         },
         setModel: (modelName) => {
@@ -180,30 +284,54 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                 if (modelExists) {
                     const newConfig = { ...config, defaultModel: modelName };
                     set({ config: newConfig });
-                    saveConfig(newConfig);
+                    saveConfig(newConfig).catch((err) => {
+                        logger.error("Failed to save config after setting model:", err);
+                    });
                     logger.info(`Successfully set model to: ${modelName}`);
                 } else {
                     logger.error(`Model "${modelName}" not found in config.`);
-                    console.error(`Model "${modelName}" not found in config.`);
                 }
             }
         },
+        addContextFile: (p: string) => {
+            const abs = path.resolve(p);
+            if (!fsSync.existsSync(abs)) {
+                logger.warn(`Context file not found: ${abs}`);
+                return;
+            }
+            const current = get().contextFiles;
+            if (!current.includes(abs)) set({ contextFiles: [...current, abs] });
+        },
+        clearContextFiles: () => set({ contextFiles: [] }),
 
         startAgent: async (input: string) => {
-            if (get().status !== "idle") return;
+            if (get().status !== "idle") {
+                logger.warn("Agent already running, ignoring new start request");
+                return;
+            }
+
+            if (isAgentRunning) {
+                logger.warn("Agent logic already executing, ignoring duplicate request");
+                return;
+            }
+
             const newHistory: HistoryItem[] = [
                 ...get().history,
-                { role: "user", content: input, id: crypto.randomUUID() },
+                { role: "user", content: input, id: randomUUID() },
             ];
             set({ history: newHistory, status: "responding" });
             await get().actions._runAgentLogic();
+        },
+
+        stopAgent: () => {
+            logger.info("Stopping agent...");
+            shouldStopAgent = true;
         },
 
         confirmToolExecution: async () => {
             const { pendingToolRequest, config } = get();
             if (!pendingToolRequest || !config) return;
 
-            // Prevent race conditions by checking if we're already executing
             if (get().status === "executing-tool") {
                 logger.warn("Tool execution already in progress, ignoring duplicate request.");
                 return;
@@ -211,15 +339,18 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
 
             set({ status: "executing-tool", pendingToolRequest: null });
 
-            const toolResults: (HistoryItem | null)[] = await Promise.all(
+            const toolResults: HistoryItem[] = await Promise.all(
                 pendingToolRequest.calls.map(async (toolCall) => {
                     try {
                         const output = await runTool(
-                            { toolName: toolCall.toolName, args: toolCall.input },
+                            {
+                                toolName: toolCall.toolName,
+                                args: (toolCall as { args?: Record<string, unknown> }).args || {},
+                            },
                             config,
                         );
                         return {
-                            id: crypto.randomUUID(),
+                            id: randomUUID(),
                             role: "tool-result",
                             toolCallId: toolCall.toolCallId,
                             toolName: toolCall.toolName,
@@ -227,7 +358,7 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                         } as HistoryItem;
                     } catch (error) {
                         return {
-                            id: crypto.randomUUID(),
+                            id: randomUUID(),
                             role: "tool-failure",
                             toolCallId: toolCall.toolCallId,
                             toolName: toolCall.toolName,
@@ -240,12 +371,8 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                 }),
             );
 
-            const filteredResults = toolResults.filter(
-                (item): item is HistoryItem => item !== null,
-            );
-
             set((state) => ({
-                history: [...state.history, ...filteredResults],
+                history: [...state.history, ...toolResults],
                 status: "responding",
             }));
             await get().actions._runAgentLogic();
@@ -256,7 +383,7 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                 history: [
                     ...state.history,
                     {
-                        id: crypto.randomUUID(),
+                        id: randomUUID(),
                         role: "user",
                         content:
                             "Tool call rejected. Please reconsider the task and propose a new plan or ask for clarification.",
@@ -268,114 +395,366 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
             get().actions._runAgentLogic();
         },
 
+        confirmCheckpoint: () => {
+            logger.info("Checkpoint confirmed by user");
+            set({ pendingCheckpoint: null, status: "tool-request" });
+        },
+
+        rejectCheckpoint: () => {
+            logger.info("Checkpoint rejected by user");
+            set((state) => ({
+                history: [
+                    ...state.history,
+                    {
+                        id: randomUUID(),
+                        role: "user",
+                        content:
+                            "Operation rejected by user. The Omnissiah has denied this action. Please propose an alternative approach or ask for clarification.",
+                    },
+                ],
+                status: "responding",
+                pendingCheckpoint: null,
+                pendingToolRequest: null,
+            }));
+            get().actions._runAgentLogic();
+        },
+
         _runAgentLogic: async (retryCount = 0) => {
+            if (isAgentRunning) {
+                logger.warn("Agent logic already running, skipping duplicate execution");
+                return;
+            }
+
+            isAgentRunning = true;
+
             try {
-                const { history, config } = get();
-                if (!config) throw new FatalError("Configuration not loaded.");
-
-                let sdkCompliantHistory = history
-                    .map((item): ModelMessage | null => {
-                        switch (item.role) {
-                            case "user":
-                                return { role: "user", content: item.content };
-                            case "assistant":
-                                return { role: "assistant", content: item.content };
-                            case "tool-result": {
-                                const outputText =
-                                    typeof item.output === "string"
-                                        ? item.output
-                                        : JSON.stringify(item.output, null, 2);
-
-                                return {
-                                    role: "tool",
-                                    content: [
-                                        {
-                                            type: "tool-result",
-                                            toolCallId: item.toolCallId,
-                                            toolName: item.toolName,
-                                            output: {
-                                                type: "text",
-                                                // CORRECTED: The property name is 'value', not 'text'.
-                                                value:
-                                                    outputText ||
-                                                    "Tool executed successfully with no output.",
-                                            },
-                                        },
-                                    ],
-                                };
-                            }
-                            default:
-                                return null;
-                        }
-                    })
-                    .filter(Boolean) as ModelMessage[];
-
-                const modelConfig = config.models.find((m) => m.name === config.defaultModel);
-                if (!modelConfig) {
-                    throw new FatalError(
-                        `Model ${config.defaultModel} not found in configuration.`,
-                    );
-                }
-
-                sdkCompliantHistory = applyContextWindow(sdkCompliantHistory, modelConfig);
-
-                const systemPrompt = await generateSystemPrompt(config);
-
-                const { textStream, toolCalls: toolCallPartsPromise } =
-                    await streamAssistantResponse(sdkCompliantHistory, config, systemPrompt);
-
-                let assistantMessage: HistoryItem | null = null;
-                for await (const part of textStream) {
-                    if (!assistantMessage) {
-                        assistantMessage = {
-                            id: crypto.randomUUID(),
-                            role: "assistant",
-                            content: "",
-                        };
-                        set((state) => ({ history: [...state.history, assistantMessage!] }));
-                    }
-                    (assistantMessage.content as string) += part;
-                    set((state) => ({ history: [...state.history] }));
-                }
-
-                const toolCalls = await toolCallPartsPromise;
-
-                if (toolCalls.length > 0) {
-                    const toolRequestItem: ToolRequestItem = {
-                        id: crypto.randomUUID(),
-                        role: "tool-request",
-                        calls: toolCalls,
-                    };
-                    set((state) => ({
-                        history: [...state.history, toolRequestItem],
-                        pendingToolRequest: toolRequestItem,
-                        status: "tool-request",
-                    }));
-                } else {
-                    set({ status: "idle" });
-                }
-            } catch (error) {
-                const typedError = error as Error;
-                if (typedError instanceof TransientError && retryCount < MAX_RETRIES) {
-                    const backoff = INITIAL_BACKOFF_MS * 2 ** retryCount;
-                    logger.warn(
-                        `Transient error caught, retrying in ${backoff}ms... (${retryCount + 1})`,
-                    );
-                    set({ status: "idle" });
-                    setTimeout(() => {
-                        set({ status: "responding" });
-                        get().actions._runAgentLogic(retryCount + 1);
-                    }, backoff);
-                    return;
-                }
-                const finalErrorMessage =
-                    typedError instanceof Error ? typedError.message : "An unknown error occurred.";
-                logger.error(`Fatal or unhandled error: ${finalErrorMessage}`);
-                set({
-                    error: finalErrorMessage,
-                    status: "error",
-                });
+                await _runAgentLogicInternal(retryCount, get, set);
+            } finally {
+                isAgentRunning = false;
             }
         },
     },
 }));
+
+async function _runAgentLogicInternal(
+    retryCount: number,
+    get: () => AppState & AppActions,
+    set: (partial: Partial<AppState>) => void,
+) {
+    if (activeStreamTimeout) {
+        clearTimeout(activeStreamTimeout);
+        activeStreamTimeout = null;
+    }
+
+    const startHistoryLength = get().history.length;
+
+    try {
+        const { history, config } = get();
+        if (!config) throw new FatalError("Configuration not loaded.");
+
+        if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+            throw new FatalError(
+                "Too many consecutive errors. Please check your configuration and API keys.",
+            );
+        }
+
+        let sdkCompliantHistory = history
+            .map((item): ModelMessage | null => {
+                switch (item.role) {
+                    case "user":
+                        return { role: "user", content: item.content };
+                    case "assistant": {
+                        if (typeof item.content === "string") {
+                            return { role: "assistant", content: item.content };
+                        }
+                        return { role: "assistant", content: item.content };
+                    }
+                    case "tool-request": {
+                        return {
+                            role: "assistant",
+                            content: item.calls.map((call) => {
+                                const args =
+                                    (call as { args?: Record<string, unknown> }).args || {};
+                                return {
+                                    type: "tool-call" as const,
+                                    toolCallId: call.toolCallId,
+                                    toolName: call.toolName,
+                                    args,
+                                    input: args,
+                                };
+                            }),
+                        };
+                    }
+                    case "tool-result": {
+                        const outputText =
+                            typeof item.output === "string"
+                                ? item.output
+                                : JSON.stringify(item.output, null, 2);
+
+                        return {
+                            role: "tool",
+                            content: [
+                                {
+                                    type: "tool-result" as const,
+                                    toolCallId: item.toolCallId,
+                                    toolName: item.toolName,
+                                    output: {
+                                        type: "text" as const,
+                                        value:
+                                            outputText ||
+                                            "Tool executed successfully with no output.",
+                                    },
+                                },
+                            ],
+                        };
+                    }
+                    case "tool-failure": {
+                        return {
+                            role: "tool",
+                            content: [
+                                {
+                                    type: "tool-result" as const,
+                                    toolCallId: item.toolCallId,
+                                    toolName: item.toolName,
+                                    output: {
+                                        type: "text" as const,
+                                        value: `Error: ${item.error}`,
+                                    },
+                                },
+                            ],
+                        };
+                    }
+                    default:
+                        return null;
+                }
+            })
+            .filter(Boolean) as ModelMessage[];
+
+        const modelConfig = config.models.find((m) => m.name === config.defaultModel);
+        if (!modelConfig) {
+            throw new FatalError(`Model ${config.defaultModel} not found in configuration.`);
+        }
+
+        sdkCompliantHistory = applyContextWindow(sdkCompliantHistory, modelConfig);
+
+        const systemPrompt = await generateSystemPrompt(config);
+
+        const streamResult = await streamAssistantResponse(
+            sdkCompliantHistory,
+            config,
+            systemPrompt,
+        );
+        const textStream = streamResult.textStream;
+        const toolCallsPromise = streamResult.toolCalls;
+
+        let assistantMessage: HistoryItem | null = null;
+        const STREAM_TIMEOUT_MS = 120000;
+
+        const resetStreamTimeout = () => {
+            if (activeStreamTimeout) {
+                clearTimeout(activeStreamTimeout);
+            }
+            activeStreamTimeout = setTimeout(() => {
+                activeStreamTimeout = null;
+                throw new TransientError("Stream timeout - no response from LLM for 2 minutes");
+            }, STREAM_TIMEOUT_MS);
+        };
+
+        resetStreamTimeout();
+
+        try {
+            for await (const part of textStream) {
+                if (shouldStopAgent) {
+                    logger.info("Agent interrupted by user");
+                    shouldStopAgent = false;
+                    set({
+                        status: "interrupted",
+                        history: [
+                            ...get().history,
+                            {
+                                id: randomUUID(),
+                                role: "assistant",
+                                content: "[Interrupted by user]",
+                            },
+                        ],
+                    });
+                    setTimeout(() => set({ status: "idle" }), 100);
+                    return;
+                }
+
+                resetStreamTimeout();
+
+                if (!assistantMessage) {
+                    assistantMessage = {
+                        id: randomUUID(),
+                        role: "assistant",
+                        content: "",
+                    };
+                    set({ history: [...get().history, assistantMessage] });
+                }
+                (assistantMessage.content as string) += part;
+                set({ history: [...get().history] });
+            }
+        } finally {
+            if (activeStreamTimeout) {
+                clearTimeout(activeStreamTimeout);
+                activeStreamTimeout = null;
+            }
+        }
+
+        if (shouldStopAgent) {
+            logger.info("Agent interrupted by user after streaming");
+            shouldStopAgent = false;
+            set({ status: "idle" });
+            return;
+        }
+
+        const toolCalls = await toolCallsPromise;
+
+        if (toolCalls.length > 0) {
+            logger.info(`Received ${toolCalls.length} tool calls from LLM`);
+
+            const validToolCalls = toolCalls
+                .filter((call) => {
+                    if (!call.toolCallId || !call.toolName) {
+                        logger.warn(`Invalid tool call structure: ${JSON.stringify(call)}`);
+                        return false;
+                    }
+                    return true;
+                })
+                .map((call) => ({
+                    ...call,
+                    args: ("args" in call && call.args) || ("input" in call && call.input) || {},
+                }));
+
+            for (const call of validToolCalls) {
+                if (call.toolName === "create") {
+                    const p = (call as { args: Record<string, unknown> }).args["path"] as
+                        | string
+                        | undefined;
+                    const content = (call as { args: Record<string, unknown> }).args["content"] as
+                        | string
+                        | undefined;
+                    if (p && fsSync.existsSync(path.resolve(p)) && typeof content === "string") {
+                        (call as { toolName: string }).toolName = "edit";
+                        (call as { args: Record<string, unknown> }).args = {
+                            path: p,
+                            edit: { type: "overwrite", content },
+                        } as Record<string, unknown>;
+                    }
+                }
+            }
+
+            const autoExecutedCalls = [] as typeof validToolCalls;
+            const autoResults: HistoryItem[] = [];
+            const pendingCalls: typeof validToolCalls = [];
+
+            for (const toolCall of validToolCalls) {
+                if (SAFE_AUTO_TOOLS.has(toolCall.toolName)) {
+                    autoExecutedCalls.push(toolCall);
+                    try {
+                        const output = await runTool(
+                            {
+                                toolName: toolCall.toolName,
+                                args: (toolCall as { args?: Record<string, unknown> }).args || {},
+                            },
+                            config,
+                        );
+                        autoResults.push({
+                            id: randomUUID(),
+                            role: "tool-result",
+                            toolCallId: toolCall.toolCallId,
+                            toolName: toolCall.toolName,
+                            output,
+                        });
+                    } catch (error) {
+                        autoResults.push({
+                            id: randomUUID(),
+                            role: "tool-failure",
+                            toolCallId: toolCall.toolCallId,
+                            toolName: toolCall.toolName,
+                            error:
+                                error instanceof Error
+                                    ? error.message
+                                    : "An unknown error occurred",
+                        });
+                    }
+                } else {
+                    pendingCalls.push(toolCall);
+                }
+            }
+
+            if (autoExecutedCalls.length > 0) {
+                const autoToolRequestItem: ToolRequestItem = {
+                    id: randomUUID(),
+                    role: "tool-request",
+                    calls: autoExecutedCalls,
+                };
+                set({
+                    history: [...get().history, autoToolRequestItem, ...autoResults],
+                    status: "responding",
+                });
+                isAgentRunning = false;
+                await get().actions._runAgentLogic();
+                return;
+            }
+
+            if (pendingCalls.length > 0) {
+                const toolRequestItem: ToolRequestItem = {
+                    id: randomUUID(),
+                    role: "tool-request",
+                    calls: pendingCalls,
+                };
+                set({
+                    history: [...get().history, toolRequestItem],
+                    pendingToolRequest: toolRequestItem,
+                    status: "tool-request",
+                });
+            } else {
+                set({ status: "idle" });
+            }
+        } else {
+            set({ status: "idle" });
+        }
+
+        consecutiveErrors = 0;
+    } catch (error) {
+        if (activeStreamTimeout) {
+            clearTimeout(activeStreamTimeout);
+            activeStreamTimeout = null;
+        }
+
+        const currentHistory = get().history;
+        if (currentHistory.length > startHistoryLength) {
+            logger.warn(
+                `Rolling back ${currentHistory.length - startHistoryLength} history items due to error`,
+            );
+            set({ history: currentHistory.slice(0, startHistoryLength) });
+        }
+
+        const typedError = error as Error;
+
+        if (typedError instanceof TransientError && retryCount < MAX_RETRIES) {
+            const backoff = INITIAL_BACKOFF_MS * 2 ** retryCount;
+            logger.warn(
+                `Transient error caught, retrying in ${backoff}ms... (${retryCount + 1}/${MAX_RETRIES})`,
+            );
+            consecutiveErrors++;
+            set({ status: "idle" });
+            setTimeout(() => {
+                set({ status: "responding" });
+                get().actions._runAgentLogic(retryCount + 1);
+            }, backoff);
+            return;
+        }
+
+        consecutiveErrors++;
+        const finalErrorMessage =
+            typedError instanceof Error ? typedError.message : "An unknown error occurred.";
+        logger.error(`Fatal or unhandled error: ${finalErrorMessage}`);
+        set({
+            error: finalErrorMessage,
+            status: "error",
+        });
+    }
+}

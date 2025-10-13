@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import { toolModules } from "../agent/tools/definitions/index.js";
+import { tools } from "../agent/tools/definitions/index.js";
 
 const staticCommands = [
     {
@@ -21,9 +21,9 @@ const staticCommands = [
     },
 ];
 
-const dynamicCommands = Object.entries(toolModules).map(([name, module]) => ({
+const dynamicCommands = Object.entries(tools).map(([name, tool]) => ({
     command: `/${name}`,
-    description: module.description,
+    description: tool.description || `Execute ${name} tool`,
 }));
 
 const allCommands = [...staticCommands, ...dynamicCommands];
@@ -31,11 +31,16 @@ const allCommands = [...staticCommands, ...dynamicCommands];
 export function HelpMenu() {
     return (
         <Box flexDirection="column" borderStyle="round" borderColor="yellow" padding={1}>
-            <Text bold>Help Menu</Text>
+            <Text bold color="yellow">
+                Help Menu
+            </Text>
             {allCommands.map((cmd) => (
                 <Box key={cmd.command}>
                     <Text>
-                        {cmd.command}: {cmd.description}
+                        <Text color="cyan" bold>
+                            {cmd.command}
+                        </Text>
+                        <Text>: {cmd.description}</Text>
                     </Text>
                 </Box>
             ))}

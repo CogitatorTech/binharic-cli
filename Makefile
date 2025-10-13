@@ -38,10 +38,10 @@ help: ## Show this help message
 install: ## Install project dependencies
 	$(PACKAGE_MANAGER) install --legacy-peer-deps
 
-build: check-deps ## Build Tobi
+build: check-deps ## Build Binharic
 	$(PACKAGE_MANAGER) run build
 
-run: build ## Start Tobi in terminal
+run: build ## Start Binharic in terminal
 	$(PACKAGE_MANAGER) start
 
 clean: ## Remove build artifacts

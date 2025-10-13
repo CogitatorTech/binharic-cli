@@ -1,11 +1,9 @@
-// src/agent/tools/definitions/edit.ts
-// REFACTORED: Throws errors on failure. Improved logic for replace/delete.
-
 import { z } from "zod";
-import type { ToolDef } from "../common.js";
+import { tool } from "ai";
 import { ToolError } from "../../errors.js";
 import { fileTracker } from "../../fileTracker.js";
 import { autofixEdit } from "../../autofix.js";
+import logger from "@/logger.js";
 
 const replaceActionSchema = z
     .object({
@@ -18,7 +16,7 @@ const replaceActionSchema = z
 const insertActionSchema = z
     .object({
         type: z.literal("insert"),
-        lineNumber: z
+        line: z
             .number()
             .int()
             .positive()
@@ -68,87 +66,105 @@ const editActionSchema = z
         `The specific edit action to perform. This object MUST have a 'type' field. Example: { "type": "replace", "search": "old text", "replaceWith": "new text" }`,
     );
 
-export const editSchema = z.object({
-    name: z.literal("edit"),
-    arguments: z
+export const editTool = tool({
+    description:
+        "Edit an existing file using structured actions (replace, insert, delete, append, prepend, overwrite). For complex edits, prefer insert_edit_into_file.",
+    inputSchema: z
         .object({
             path: z.string().describe("The path of the file to edit."),
             edit: editActionSchema,
         })
         .strict(),
-});
+    execute: async ({ path, edit }) => {
+        try {
+            await fileTracker.assertCanEdit(path);
+            const originalContent = await fileTracker.read(path);
+            let newContent = "";
 
-async function implementation(args: z.infer<typeof editSchema>["arguments"]): Promise<string> {
-    try {
-        await fileTracker.assertCanEdit(args.path);
-        const originalContent = await fileTracker.read(args.path);
-        let newContent = "";
+            switch (edit.type) {
+                case "replace": {
+                    if (!originalContent.includes(edit.search)) {
+                        // Check if autofix is available and enabled
+                        const shouldAttemptAutofix =
+                            process.env.OPENAI_API_KEY &&
+                            process.env.ENABLE_EDIT_AUTOFIX !== "false";
 
-        switch (args.edit.type) {
-            case "replace": {
-                if (!originalContent.includes(args.edit.search)) {
-                    const correctedSearch = await autofixEdit(originalContent, args.edit.search);
-                    if (correctedSearch) {
-                        newContent = originalContent.replace(
-                            correctedSearch,
-                            args.edit.replaceWith,
+                        if (shouldAttemptAutofix) {
+                            logger.warn(`Search string not found in file. Attempting autofix...`);
+                            try {
+                                const correctedSearch = await autofixEdit(
+                                    originalContent,
+                                    edit.search,
+                                );
+                                if (correctedSearch) {
+                                    logger.info(
+                                        "Autofix successful, using corrected search string",
+                                    );
+                                    newContent = originalContent.replace(
+                                        correctedSearch,
+                                        edit.replaceWith,
+                                    );
+                                    break;
+                                }
+                            } catch (autofixError) {
+                                logger.error("Autofix threw an error:", autofixError);
+                                // Fall through to the error below
+                            }
+                        }
+
+                        // Autofix failed or disabled
+                        throw new ToolError(
+                            `The search string was not found in the file. ` +
+                                `Expected to find:\n"${edit.search.substring(0, 100)}${edit.search.length > 100 ? "..." : ""}"\n\n` +
+                                `Tip: Make sure to provide the EXACT text from the file, or use a different edit type like 'overwrite'.`,
                         );
                     } else {
+                        newContent = originalContent.replace(edit.search, edit.replaceWith);
+                    }
+                    break;
+                }
+                case "insert": {
+                    const lines = originalContent.split("\n");
+                    const line = edit.line;
+                    if (line < 1 || line > lines.length + 1) {
                         throw new ToolError(
-                            `The search string was not found in the file and autofix failed.`,
+                            `Invalid line number ${line}. File has ${lines.length} lines. Must be between 1 and ${lines.length + 1}.`,
                         );
                     }
-                } else {
-                    newContent = originalContent.replace(args.edit.search, args.edit.replaceWith);
+                    lines.splice(line - 1, 0, edit.content);
+                    newContent = lines.join("\n");
+                    break;
                 }
-                break;
-            }
-            case "insert": {
-                const lines = originalContent.split("\n");
-                const line = args.edit.lineNumber;
-                if (line < 1 || line > lines.length + 1) {
-                    throw new ToolError(
-                        `Invalid line number ${line}. File has ${lines.length} lines. Must be between 1 and ${lines.length + 1}.`,
-                    );
+                case "delete": {
+                    if (!originalContent.includes(edit.content)) {
+                        throw new ToolError(`The content to delete was not found in the file.`);
+                    }
+                    newContent = originalContent.replace(edit.content, "");
+                    break;
                 }
-                lines.splice(line - 1, 0, args.edit.content);
-                newContent = lines.join("\n");
-                break;
+                case "append":
+                    newContent = originalContent + edit.content;
+                    break;
+                case "prepend":
+                    newContent = edit.content + originalContent;
+                    break;
+                case "overwrite":
+                    newContent = edit.content;
+                    break;
             }
-            case "delete": {
-                if (!originalContent.includes(args.edit.content)) {
-                    throw new ToolError(`The content to delete was not found in the file.`);
+            await fileTracker.write(path, newContent);
+            return `Successfully edited file at ${path}`;
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+                    throw new ToolError(`File not found at ${path}. Use the 'create' tool first.`);
                 }
-                newContent = originalContent.replace(args.edit.content, "");
-                break;
+                if (error instanceof ToolError) throw error;
+                throw new ToolError(error.message);
             }
-            case "append":
-                newContent = originalContent + args.edit.content;
-                break;
-            case "prepend":
-                newContent = args.edit.content + originalContent;
-                break;
-            case "overwrite":
-                newContent = args.edit.content;
-                break;
+            throw new ToolError("An unknown error occurred while editing the file.");
         }
-        await fileTracker.write(args.path, newContent);
-        return `Successfully edited file at ${args.path}`;
-    } catch (error: unknown) {
-        if (error instanceof Error) {
-            if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-                throw new ToolError(`File not found at ${args.path}. Use the 'create' tool first.`);
-            }
-            // Re-throw known ToolErrors, wrap others
-            if (error instanceof ToolError) throw error;
-            throw new ToolError(error.message);
-        }
-        throw new ToolError("An unknown error occurred while editing the file.");
-    }
-}
+    },
+});
 
-export default {
-    schema: editSchema,
-    implementation,
-    description: "Edit an existing file.",
-} satisfies ToolDef<typeof editSchema>;
+export default editTool;

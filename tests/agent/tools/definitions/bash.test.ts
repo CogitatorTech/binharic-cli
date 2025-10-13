@@ -29,8 +29,7 @@ describe("bash tool", () => {
     });
 
     it("should resolve with output on successful execution and use default timeout", async () => {
-        const args = bash.schema.shape.arguments.parse({ cmd: "ls -l" });
-        const promise = bash.implementation(args);
+        const promise = bash.execute!({ cmd: "ls -l" }, {} as any);
 
         stdoutMock.emit("data", "file1.txt");
         stdoutMock.emit("data", "file2.txt");
@@ -46,8 +45,7 @@ describe("bash tool", () => {
     });
 
     it("should use provided timeout", async () => {
-        const args = bash.schema.shape.arguments.parse({ cmd: "sleep 5", timeout: 5000 });
-        const promise = bash.implementation(args);
+        const promise = bash.execute!({ cmd: "sleep 5", timeout: 5000 }, {} as any);
 
         childProcessMock.emit("close", 0);
 
@@ -61,8 +59,7 @@ describe("bash tool", () => {
     });
 
     it("should reject with ToolError on non-zero exit code", async () => {
-        const args = bash.schema.shape.arguments.parse({ cmd: "ls non_existent_dir" });
-        const promise = bash.implementation(args);
+        const promise = bash.execute!({ cmd: "ls non_existent_dir" }, {} as any);
 
         stderrMock.emit("data", "ls: cannot access 'non_existent_dir': No such file or directory");
         childProcessMock.emit("close", 2);
@@ -75,8 +72,7 @@ describe("bash tool", () => {
 
     it("should reject with ToolError on command start error", async () => {
         const error = new Error("spawn ENOENT");
-        const args = bash.schema.shape.arguments.parse({ cmd: "invalid_command" });
-        const promise = bash.implementation(args);
+        const promise = bash.execute!({ cmd: "invalid_command" }, {} as any);
 
         childProcessMock.emit("error", error);
 
@@ -85,8 +81,7 @@ describe("bash tool", () => {
     });
 
     it("should handle stderr output correctly", async () => {
-        const args = bash.schema.shape.arguments.parse({ cmd: "some_command" });
-        const promise = bash.implementation(args);
+        const promise = bash.execute!({ cmd: "some_command" }, {} as any);
 
         stderrMock.emit("data", "some error");
         childProcessMock.emit("close", 1);

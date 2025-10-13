@@ -5,14 +5,15 @@ import React from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import { useStore } from "@/agent/state.js";
+import { getConfigDir } from "@/config.js";
 import path from "path";
 import { useShallow } from "zustand/react/shallow";
 
 const statusTexts: { [key: string]: string } = {
-    initializing: "initializing...",
-    responding: "responding...",
-    "tool-request": "awaiting confirmation...",
-    "executing-tool": "executing tool...",
+    initializing: "Awakening the machine spirit...",
+    responding: "Communing with the Omnissiah...",
+    "tool-request": "Seeking the Tech-Priest's blessing...",
+    "executing-tool": "Performing sacred rites...",
 };
 
 export function Footer() {
@@ -28,12 +29,13 @@ export function Footer() {
     const cwd = path.basename(process.cwd());
     const modelName = config?.defaultModel ?? "loading...";
     const statusText = statusTexts[status];
+    const logsDir = path.join(getConfigDir(), "logs");
 
     return (
         <Box marginTop={1} justifyContent="space-between">
             <Box>
                 <Text color="gray">{cwd}</Text>
-                <Text color="gray"> ( {branchName})</Text>
+                <Text color="gray"> ( {branchName})</Text>
             </Box>
 
             {status !== "idle" && status !== "error" && (
@@ -45,8 +47,9 @@ export function Footer() {
 
             {status === "error" && (
                 <Box flexDirection="column" alignItems="center">
-                    <Text color="red">Error: {error}</Text>
-                    <Text>Press any key to continue.</Text>
+                    <Text color="red">⚠️ Corruption detected in the machine spirit: {error}</Text>
+                    <Text color="yellow">Consult the sacred logs: {logsDir}</Text>
+                    <Text>Press any key to recalibrate and continue.</Text>
                 </Box>
             )}
 
