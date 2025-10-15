@@ -23,8 +23,9 @@ Binharic is a terminal-based AI coding assistant (a coding agent) similar to Ope
 Anthropic's Claude Code—but with the personality of a devout Tech-Priest of the Adeptus Mechanicus.
 Binharic is written in TypeScript and uses the [AI SDK](https://ai-sdk.dev/) framework for most of its underlying
 agentic logic (like tool calling and workflow management).
-Moreover, its architecture follows the recommendations mentioned in the
-[building effective agents](https://www.anthropic.com/engineering/building-effective-agents) from Anthropic.
+Additionally, its architecture follows the recommendations mentioned in the
+[building effective agents](https://www.anthropic.com/engineering/building-effective-agents) article from Anthropic,
+to a good degree.
 
 Binharic's development started as a personal project to learn more about building a terminal-based coding agent.
 However, the project has grown somewhat into a full-fledged coding assistant with a lot of features
