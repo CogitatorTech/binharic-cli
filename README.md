@@ -68,6 +68,8 @@ export GOOGLE_API_KEY=<your-google-api-key>
 binharic
 ```
 
+[![asciicast](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C.svg)](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C)
+
 ---
 
 #### Documentation
