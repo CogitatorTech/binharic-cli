@@ -28,7 +28,7 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Transient error handling with exponential backoff
     - [x] Tool execution confirmation flow
     - [x] AI SDK 5 Agent class integration
-    - [x] Automatic loop control with stopWhen conditions\*\*
+    - [x] Automatic loop control with stopWhen conditions**
     - [x] Budget-based stopping conditions
     - [x] Error threshold conditions
     - [x] Validation-based stopping
@@ -103,17 +103,18 @@ It includes planned features, improvements, and their current implementation sta
     - [x] File search with @ mention
     - [x] Non-blocking UI during LLM responses
     - [x] Command syntax highlighting (partial match in yellow, full match in cyan)
-    - [x] Colored help menu items\*\*
+    - [x] Colored help menu items**
     - [x] Clean message display (no "Binharic:" prefix)
     - [x] Dynamic username from system (not hardcoded)
     - [x] Tool results hidden from UI (only failures shown)
+    - [x] Git branch display in footer
     - [ ] Syntax highlighting for code blocks
     - [ ] Multi-pane view for side-by-side comparison
     - [ ] Terminal themes support
 - **User Experience**
     - [x] Graceful error handling
-    - [x] Status indicators (idle, responding, executing)
-    - [x] Git branch display in header
+    - [x] Status indicators (idle, responding, tool-request, executing-tool, error)
+    - [x] Git branch display
     - [x] Responsive input field (non-blocking)
     - [x] Clear error messages for tool failures
     - [ ] Progress bars for long operations
@@ -146,7 +147,7 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Automatic retry with backoff for transient errors
     - [x] Error logging with Winston
     - [x] Graceful degradation
-    - [x] Agent-level error handling\*\*
+    - [x] Agent-level error handling**
     - [x] Tool call ID tracking and validation (AI SDK 5)
     - [x] History rollback on errors
     - [x] Stream timeout protection (2 minutes)
@@ -180,9 +181,8 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Error handling tests
     - [x] State management tests
     - [x] UI component tests
-    - [x] File tracker tests (315+ tests passing)
-    - [x] Tool call ID mismatch tests
-    - [x] History rollback tests
+    - [x] Comprehensive tool call ID mismatch and history rollback tests
+    - [x] Extensive overall test suite (hundreds of passing tests)
     - [ ] Integration tests
     - [ ] End-to-end tests
     - [ ] Performance benchmarks
@@ -242,7 +242,7 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Multi-step tool execution with automatic loop control
     - [x] Specialized agents with distinct personalities
     - [x] onStepFinish callbacks for monitoring
-    - [x] prepareStep callbacks for dynamic configuration\*\*
+    - [x] prepareStep callbacks for dynamic configuration**
     - [x] Multiple stopping conditions (step count, budget, errors, validation, completion)
     - [ ] Goal-oriented planning
     - [ ] Task decomposition

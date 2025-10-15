@@ -12,7 +12,7 @@ import { createModelRegistry } from "./modelRegistry.js";
 
 let globalRegistry: ReturnType<typeof createModelRegistry> | null = null;
 
-export function getOrCreateRegistry(config: Config) {
+function getOrCreateRegistry(config: Config) {
     if (!globalRegistry) {
         globalRegistry = createModelRegistry(config);
         logger.info("Global model registry initialized");
@@ -20,15 +20,13 @@ export function getOrCreateRegistry(config: Config) {
     return globalRegistry;
 }
 
-export function resetRegistry() {
-    globalRegistry = null;
-}
-
 export async function checkProviderAvailability(config: Config): Promise<{
     available: boolean;
     availableProviders: string[];
     unavailableProviders: string[];
 }> {
+    getOrCreateRegistry(config);
+
     const availableProviders: string[] = [];
     const unavailableProviders: string[] = [];
 

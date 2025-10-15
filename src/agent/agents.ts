@@ -2,7 +2,7 @@ import { Experimental_Agent as Agent, stepCountIs, Output } from "ai";
 import { z } from "zod";
 import type { Config } from "@/config.js";
 import { createLlmProvider } from "./llm.js";
-import { tools } from "./tools/definitions/index.js";
+import { tools } from "./tools/index.js";
 import { generateSystemPrompt } from "./systemPrompt.js";
 import logger from "@/logger.js";
 import { createWorkflowTool } from "./tools/definitions/workflow.js";

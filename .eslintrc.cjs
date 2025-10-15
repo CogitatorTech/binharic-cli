@@ -16,4 +16,22 @@ module.exports = {
             { argsIgnorePattern: "^_" },
         ],
     },
+    overrides: [
+        {
+            files: ["tests/**/*"],
+            rules: {
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-unused-vars": "off",
+                "no-empty": "off",
+                "@typescript-eslint/no-var-requires": "off",
+                "require-yield": "off",
+            },
+        },
+        {
+            files: ["**/*.d.ts"],
+            rules: {
+                "@typescript-eslint/no-explicit-any": "off",
+            },
+        },
+    ],
 };

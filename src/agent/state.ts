@@ -749,8 +749,7 @@ async function _runAgentLogicInternal(
         }
 
         consecutiveErrors++;
-        const finalErrorMessage =
-            typedError instanceof Error ? typedError.message : "An unknown error occurred.";
+        const finalErrorMessage = typedError.message;
         logger.error(`Fatal or unhandled error: ${finalErrorMessage}`);
         set({
             error: finalErrorMessage,

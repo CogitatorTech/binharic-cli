@@ -8,9 +8,13 @@ import { useStore } from "@/agent/state.js";
 import { useShallow } from "zustand/react/shallow";
 import { FileSearch } from "./FileSearch.js";
 import { HighlightedInput } from "./HighlightedInput.js";
+import { CommandAutocomplete } from "./CommandAutocomplete.js";
+import { getCommandSuggestions } from "./commandRegistry.js";
 import { runTool } from "@/agent/tools/index.js";
+import { randomUUID } from "crypto";
 
 const MAX_VISIBLE_FILES = 5;
+const MAX_VISIBLE_COMMANDS = 10;
 
 export function UserInput() {
     const [useStateInput, setInputValue] = useState("");
@@ -19,6 +23,11 @@ export function UserInput() {
     const [searchResults, setSearchResults] = useState<string[]>([]);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [visibleFileCount, setVisibleFileCount] = useState(MAX_VISIBLE_FILES);
+    const [commandAutocompleteActive, setCommandAutocompleteActive] = useState(false);
+    const [commandSuggestions, setCommandSuggestions] = useState<
+        ReturnType<typeof getCommandSuggestions>
+    >([]);
+    const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
 
     const {
         startAgent,
@@ -73,8 +82,18 @@ export function UserInput() {
             setSearchQuery(query);
             setSelectedIndex(0);
             setVisibleFileCount(MAX_VISIBLE_FILES);
+            setCommandAutocompleteActive(false);
         } else {
             setSearchActive(false);
+        }
+
+        if (useStateInput.startsWith("/") && !useStateInput.includes(" ")) {
+            const suggestions = getCommandSuggestions(useStateInput);
+            setCommandSuggestions(suggestions);
+            setCommandAutocompleteActive(suggestions.length > 0);
+            setSelectedCommandIndex(0);
+        } else {
+            setCommandAutocompleteActive(false);
         }
     }, [useStateInput]);
 
@@ -99,6 +118,37 @@ export function UserInput() {
     }, [searchQuery, searchActive, config]);
 
     useInput((input, key) => {
+        if (key.escape) {
+            if (commandAutocompleteActive) {
+                setCommandAutocompleteActive(false);
+                setInputValue("");
+                return;
+            }
+            if (searchActive) {
+                setSearchActive(false);
+                setSearchResults([]);
+                setInputValue("");
+                return;
+            }
+        }
+
+        if (commandAutocompleteActive) {
+            if (key.upArrow) {
+                setSelectedCommandIndex((prev) => (prev > 0 ? prev - 1 : prev));
+            } else if (key.downArrow) {
+                setSelectedCommandIndex((prev) =>
+                    prev < commandSuggestions.length - 1 ? prev + 1 : prev,
+                );
+            } else if (key.tab || (key.return && commandSuggestions.length > 0)) {
+                const selectedCommand = commandSuggestions[selectedCommandIndex];
+                if (selectedCommand) {
+                    setInputValue(selectedCommand.command + " ");
+                    setCommandAutocompleteActive(false);
+                }
+            }
+            return;
+        }
+
         if (searchActive) {
             if (key.upArrow) {
                 setSelectedIndex((prev) => (prev > 0 ? prev - 1 : prev));
@@ -147,6 +197,15 @@ export function UserInput() {
             closeHelpMenu();
         }
 
+        if (commandAutocompleteActive && commandSuggestions.length > 0) {
+            const selectedCommand = commandSuggestions[selectedCommandIndex];
+            if (selectedCommand) {
+                setInputValue(selectedCommand.command + " ");
+                setCommandAutocompleteActive(false);
+            }
+            return;
+        }
+
         if (searchActive && searchResults.length > 0) {
             const lastAtIndex = useStateInput.lastIndexOf("@");
             const file = searchResults[selectedIndex];
@@ -183,6 +242,7 @@ export function UserInput() {
                         clearCommandHistory();
                         break;
                     case "quit":
+                    case "exit":
                         exit();
                         break;
                     case "system":
@@ -196,6 +256,47 @@ export function UserInput() {
                             rest.split(/\s+/)
                                 .filter(Boolean)
                                 .forEach((p) => addContextFile(p));
+                        }
+                        break;
+                    }
+                    case "models": {
+                        if (config) {
+                            const providers = new Map<string, typeof config.models>();
+                            config.models.forEach((model) => {
+                                if (!providers.has(model.provider)) {
+                                    providers.set(model.provider, []);
+                                }
+                                providers.get(model.provider)!.push(model);
+                            });
+
+                            let output = "\n╭─ Available Models ─╮\n";
+
+                            providers.forEach((models, provider) => {
+                                const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+                                output += `\n${providerName}:\n`;
+
+                                models.forEach((model) => {
+                                    const isDefault = model.name === config.defaultModel;
+                                    const marker = isDefault ? " (current)" : "";
+                                    const contextSize = (model.context / 1000).toFixed(0) + "K";
+                                    output += `  • ${model.name}${marker} - ${model.modelId} [${contextSize} context]\n`;
+                                });
+                            });
+
+                            output += "\nUse '/model <name>' to switch models\n";
+                            output += "╰─────────────────────╯\n";
+
+                            // Append an assistant message with the models list to history
+                            useStore.setState((state) => ({
+                                history: [
+                                    ...state.history,
+                                    {
+                                        id: randomUUID(),
+                                        role: "assistant",
+                                        content: output,
+                                    },
+                                ],
+                            }));
                         }
                         break;
                     }
@@ -224,6 +325,14 @@ export function UserInput() {
 
     return (
         <Box flexDirection="column">
+            {commandAutocompleteActive && commandSuggestions.length > 0 && (
+                <CommandAutocomplete
+                    query={useStateInput}
+                    suggestions={commandSuggestions}
+                    selectedIndex={selectedCommandIndex}
+                    maxVisible={MAX_VISIBLE_COMMANDS}
+                />
+            )}
             {searchActive && searchResults.length > 0 && (
                 <FileSearch
                     query={searchQuery}
@@ -232,20 +341,29 @@ export function UserInput() {
                     selectedIndex={selectedIndex}
                 />
             )}
-            {/* Show highlighted preview when typing a command */}
-            {useStateInput.startsWith("/") && useStateInput.length > 1 && (
-                <Box marginBottom={1}>
-                    <HighlightedInput value={useStateInput} placeholder="" />
+            {useStateInput.startsWith("/") &&
+                useStateInput.length > 1 &&
+                !commandAutocompleteActive && (
+                    <Box marginBottom={1}>
+                        <HighlightedInput value={useStateInput} placeholder="" />
+                    </Box>
+                )}
+            <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1}>
+                <Box>
+                    <Text color="cyan" bold>
+                        &gt;{" "}
+                    </Text>
+                    <TextInput
+                        value={useStateInput}
+                        onChange={setInputValue}
+                        onSubmit={handleSubmit}
+                        placeholder={
+                            isAgentBusy
+                                ? "Agent is working..."
+                                : "Type your message or @path/to/file"
+                        }
+                    />
                 </Box>
-            )}
-            <Box borderStyle="round" borderColor="blue" marginTop={1}>
-                <Text>&gt; </Text>
-                <TextInput
-                    value={useStateInput}
-                    onChange={setInputValue}
-                    onSubmit={handleSubmit}
-                    placeholder={isAgentBusy ? "..." : "Type your message..."}
-                />
             </Box>
         </Box>
     );

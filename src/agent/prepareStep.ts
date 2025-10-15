@@ -200,21 +200,30 @@ export function createTokenBudgetManager(maxTokensPerStep: number = 2000): Prepa
             return { messages: [messages[0], ...recentMessages] };
         }
 
-        return {};
+        return { messages };
     };
 }
 
 export function combinePrepareSteps(
-    ...prepareSteps: Array<PrepareStepHandler>
-): PrepareStepHandler {
+    ...handlers: PrepareStepHandler[]
+): (params: Parameters<PrepareStepHandler>[0]) => ReturnType<PrepareStepHandler> {
     return (params) => {
-        let result: ReturnType<PrepareStepHandler> = {};
+        let currentParams = { ...params };
+        let mergedResult: ReturnType<PrepareStepHandler> = {};
 
-        for (const prepareStep of prepareSteps) {
-            const stepResult = prepareStep(params);
-            result = { ...result, ...stepResult };
+        for (const handler of handlers) {
+            const result = handler(currentParams);
+
+            if (result.messages) {
+                currentParams = { ...currentParams, messages: result.messages };
+            }
+            if (result.model) {
+                currentParams = { ...currentParams, model: result.model };
+            }
+
+            mergedResult = { ...mergedResult, ...result };
         }
 
-        return result;
+        return mergedResult;
     };
 }
