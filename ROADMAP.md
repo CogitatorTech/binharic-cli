@@ -1,20 +1,20 @@
 ## Feature Roadmap
 
-This document outlines the roadmap for Binharic, an AI coding assistant blessed by the Omnissiah.
+This document outlines the roadmap for the Binharic coding agent.
 It includes planned features, improvements, and their current implementation status.
 
 > [!IMPORTANT]
-> This roadmap is a work in progress and is subject to change as we receive guidance from the Machine God.
+> This roadmap is a work in progress and is subject to change without notice.
 
-### 1. Core Agent Capabilities
+### 1. Core Agentic Capabilities
 
 - **LLM Provider Support**
-    - [x] OpenAI models (GPT-4o, GPT-4o-mini, GPT-5 series)
-    - [x] Anthropic models (Claude 4 Sonnet, Claude 4.5 Sonnet)
-    - [x] Google AI models (Gemini 2.5 Pro, Gemini 2.5 Flash)
+    - [x] OpenAI models (GPT-4o, GPT-4o-mini, and GPT-5 series)
+    - [x] Anthropic models (Claude 4 Sonnet and Claude 4.5 Sonnet)
+    - [x] Google AI models (Gemini 2.5 Pro and Gemini 2.5 Flash)
     - [x] Ollama for local model execution
     - [ ] Support for Azure OpenAI endpoints
-    - [ ] Support for additional model providers (Cohere, Mistral)
+    - [ ] Support for additional model providers (Cohere and Mistral)
 - **Context Management**
     - [x] Token-based context window management
     - [x] Automatic context trimming for long conversations
@@ -113,7 +113,7 @@ It includes planned features, improvements, and their current implementation sta
     - [ ] Terminal themes support
 - **User Experience**
     - [x] Graceful error handling
-    - [x] Status indicators (idle, responding, tool-request, executing-tool, error)
+    - [x] Status indicators (idle, responding, tool-request, executing-tool, and error)
     - [x] Git branch display
     - [x] Responsive input field (non-blocking)
     - [x] Clear error messages for tool failures
@@ -147,7 +147,7 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Automatic retry with backoff for transient errors
     - [x] Error logging with Winston
     - [x] Graceful degradation
-    - [x] Agent-level error handling**
+    - [x] Agent-level error handling
     - [x] Tool call ID tracking and validation (AI SDK 5)
     - [x] History rollback on errors
     - [x] Stream timeout protection (2 minutes)
@@ -247,20 +247,20 @@ It includes planned features, improvements, and their current implementation sta
     - [ ] Goal-oriented planning
     - [ ] Task decomposition
     - [ ] Long-term memory
-    - [ ] **Agent composition (combining multiple agents)**
-    - [ ] **Dynamic agent selection**
+    - [ ] Agent composition (combining multiple agents)
+    - [ ] Dynamic agent selection
 - **Collaboration**
     - [ ] Team workspaces
     - [ ] Shared conversation history
     - [ ] Code review assistance
     - [ ] Pull request analysis
-    - [ ] **Multi-agent collaboration**
+    - [ ] Multi-agent collaboration
 - **Extensions & Plugins**
     - [ ] Plugin system architecture
     - [ ] Custom tool registration
     - [ ] Language-specific plugins
     - [ ] Framework-specific assistants
-    - [ ] **Custom agent templates**
+    - [ ] Custom agent templates
 
 ### 10. Security & Privacy
 

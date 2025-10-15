@@ -21,7 +21,8 @@ check-deps:
 	fi
 
 # Declare all targets as phony (not files)
-.PHONY: help install check-deps test coverage lint lint-fix format typecheck build run clean reset setup-hooks test-hooks
+.PHONY: help install check-deps test coverage lint lint-fix format typecheck build run clean reset setup-hooks \
+ test-hooks npm-login npm-whoami pack pack-dry-run publish publish-dry-run version-patch version-minor version-major
 
 .DEFAULT_GOAL := help
 
@@ -81,3 +82,33 @@ setup-hooks: ## Install Git hooks (pre-commit and pre-push)
 test-hooks: ## Test Git hooks on all files
 	@echo "Testing Git hooks..."
 	@pre-commit run --all-files --show-diff-on-failure
+
+# ==============================================================================
+# PUBLISHING
+# ==============================================================================
+npm-login: ## Log in to npm registry
+	$(PACKAGE_MANAGER) login
+
+npm-whoami: ## Show current npm user (if logged in)
+	-$(PACKAGE_MANAGER) whoami
+
+pack: build ## Create npm tarball (binharic-cli-<version>.tgz)
+	$(PACKAGE_MANAGER) pack
+
+pack-dry-run: build ## Preview files that would be packed
+	$(PACKAGE_MANAGER) pack --dry-run
+
+publish-dry-run: ## Simulate npm publish (no registry changes)
+	$(PACKAGE_MANAGER) publish --dry-run
+
+publish: ## Publish the package to npm (runs build via prepublishOnly)
+	$(PACKAGE_MANAGER) publish
+
+version-patch: ## Bump patch version (x.y.z -> x.y.(z+1))
+	$(PACKAGE_MANAGER) version patch
+
+version-minor: ## Bump minor version (x.y.z -> x.(y+1).0)
+	$(PACKAGE_MANAGER) version minor
+
+version-major: ## Bump major version ((x+1).0.0)
+	$(PACKAGE_MANAGER) version major

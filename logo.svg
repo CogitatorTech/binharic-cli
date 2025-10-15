@@ -1,8 +1,70 @@
-<?xml version="1.0" encoding="utf-8"?><!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
-<svg width="800px" height="800px" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="48" height="48" fill="white" fill-opacity="0.01"/>
-    <rect x="4" y="8" width="40" height="32" rx="2" fill="#2F88FF" stroke="#000000" stroke-width="4"
-          stroke-linejoin="round"/>
-    <path d="M12 18L19 24L12 30" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M23 32H36" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   width="800px"
+   height="800px"
+   viewBox="0 0 48 48"
+   fill="none"
+   version="1.1"
+   id="svg10"
+   sodipodi:docname="logo.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs14" />
+  <sodipodi:namedview
+     id="namedview12"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="0.295"
+     inkscape:cx="401.69492"
+     inkscape:cy="401.69492"
+     inkscape:window-width="1862"
+     inkscape:window-height="1131"
+     inkscape:window-x="58"
+     inkscape:window-y="32"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg10" />
+  <rect
+     width="48"
+     height="48"
+     fill="white"
+     fill-opacity="0.01"
+     id="rect2" />
+  <rect
+     x="4"
+     y="8"
+     width="40"
+     height="32"
+     rx="2"
+     fill="#2F88FF"
+     stroke="#000000"
+     stroke-width="4"
+     stroke-linejoin="round"
+     id="rect4"
+     style="fill:#6600ff" />
+  <path
+     d="M12 18L19 24L12 30"
+     stroke="white"
+     stroke-width="4"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     id="path6" />
+  <path
+     d="M23 32H36"
+     stroke="white"
+     stroke-width="4"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     id="path8" />
 </svg>

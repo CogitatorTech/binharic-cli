@@ -1,13 +1,23 @@
 {
   "name": "binharic-cli",
-  "version": "0.1.0",
-  "description": "An AI coding assistant blessed by the Omnissiah.",
+  "version": "0.1.0-alpha.1",
+  "description": "A coding agent with the persona of a Tech-Priest of the Adeptus Mechanicus",
   "main": "dist/cli.js",
   "type": "module",
+  "bin": {
+    "binharic": "./dist/cli.js",
+    "binharic-cli": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "start": "node dist/cli.js",
     "dev": "nodemon",
     "build": "rm -rf ./dist && tsc && tsc-alias",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "test:watch": "vitest",

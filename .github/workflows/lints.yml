@@ -1,4 +1,4 @@
-name: Linting & Typechecking
+name: Run Code Analysis
 
 on:
   workflow_dispatch:
