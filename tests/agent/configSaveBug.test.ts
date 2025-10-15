@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Config } from "@/config.js";
 
 describe("Config Save Bug Fixes", () => {

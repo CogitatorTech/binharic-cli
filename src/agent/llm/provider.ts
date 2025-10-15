@@ -6,7 +6,7 @@ import { type LanguageModel, type ModelMessage, streamText } from "ai";
 import "dotenv/config";
 import logger from "@/logger.js";
 import type { Config, ModelConfig } from "@/config.js";
-import { FatalError, TransientError } from "./errors.js";
+import { FatalError, TransientError } from "../errors/index.js";
 import { tools } from "@/agent/tools/index.js";
 import { createModelRegistry } from "./modelRegistry.js";
 

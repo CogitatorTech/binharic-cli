@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import searchTool from "../../../../src/agent/tools/definitions/search";
 import { ChildProcess } from "child_process";
 import { EventEmitter } from "events";

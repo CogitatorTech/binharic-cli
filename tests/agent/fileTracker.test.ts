@@ -1,5 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { FileTracker, FileExistsError, FileOutdatedError } from "../../src/agent/fileTracker.js";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+    FileExistsError,
+    FileOutdatedError,
+    FileTracker,
+} from "../../src/agent/core/fileTracker.js";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";

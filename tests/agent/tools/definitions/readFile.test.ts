@@ -1,14 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import readFileTool from "../../../../src/agent/tools/definitions/readFile";
-import { fileTracker } from "../../../../src/agent/fileTracker";
+import { fileTracker } from "../../../../src/agent/core/fileTracker";
 
-vi.mock("../../../../src/agent/fileTracker", () => ({
+vi.mock("../../../../src/agent/core/fileTracker", () => ({
     fileTracker: {
         read: vi.fn(),
     },
 }));
 
 describe("readFile tool", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     it("should return the file content when read is successful", async () => {
         const mockRead = vi.mocked(fileTracker.read);
         mockRead.mockResolvedValue("file content");
@@ -32,10 +36,12 @@ describe("readFile tool", () => {
 
     it("should throw a ToolError for other read errors", async () => {
         const mockRead = vi.mocked(fileTracker.read);
-        mockRead.mockRejectedValue(new Error("Some other error"));
+        const error: NodeJS.ErrnoException = new Error("Some other error");
+        error.code = "EACCES";
+        mockRead.mockRejectedValue(error);
 
         await expect(readFileTool.execute!({ path: "test.ts" }, {} as any)).rejects.toThrow(
-            "Error reading file: Some other error",
+            /Permission denied/,
         );
     });
 

@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import fs from "fs/promises";
+import path from "path";
+import os from "os";
 
 describe("Config Management - Save and Load Issues", () => {
     it("should preserve all config fields on save", () => {
@@ -79,10 +82,6 @@ describe("Config Management - Save and Load Issues", () => {
         expect(validKeys.google.length).toBeGreaterThan(10);
     });
 });
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import fs from "fs/promises";
-import path from "path";
-import os from "os";
 
 describe("Insert Edit Tool - Smart Diff Application", () => {
     let testDir: string;

@@ -1,17 +1,17 @@
 import { create } from "zustand";
 import { randomUUID } from "crypto";
 import logger from "@/logger.js";
-import { streamAssistantResponse, checkProviderAvailability } from "./llm.js";
+import { checkProviderAvailability, streamAssistantResponse } from "../llm/provider.js";
 import { generateSystemPrompt } from "./systemPrompt.js";
-import { runTool } from "./tools/index.js";
-import { type Config, type ModelConfig, getHistoryPath, loadConfig, saveConfig } from "@/config.js";
-import { FatalError, TransientError } from "./errors.js";
+import { runTool } from "../tools/index.js";
+import { type Config, getHistoryPath, loadConfig, type ModelConfig, saveConfig } from "@/config.js";
+import { FatalError, TransientError } from "../errors/index.js";
 import fsSync from "fs";
 import path from "path";
 import simpleGit from "simple-git";
-import { HistoryItem, ToolRequestItem } from "./history.js";
+import { HistoryItem, ToolRequestItem } from "../context/history.js";
 import type { ModelMessage } from "ai";
-import { applyContextWindow } from "./contextWindow.js";
+import { applyContextWindow } from "../context/contextWindow.js";
 import type { CheckpointRequest } from "./checkpoints.js";
 
 const SAFE_AUTO_TOOLS = new Set([
@@ -124,6 +124,8 @@ let consecutiveErrors = 0;
 let activeStreamTimeout: NodeJS.Timeout | null = null;
 let isAgentRunning = false;
 let shouldStopAgent = false;
+let agentLockTimestamp = 0;
+const AGENT_LOCK_TIMEOUT_MS = 300000;
 
 export const useStore = create<AppState & AppActions>((set, get) => ({
     history: [],
@@ -310,11 +312,18 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                 return;
             }
 
+            const now = Date.now();
             if (isAgentRunning) {
-                logger.warn("Agent logic already executing, ignoring duplicate request");
-                return;
+                if (now - agentLockTimestamp > AGENT_LOCK_TIMEOUT_MS) {
+                    logger.warn("Agent lock timeout detected, forcing reset");
+                    isAgentRunning = false;
+                } else {
+                    logger.warn("Agent logic already executing, ignoring duplicate request");
+                    return;
+                }
             }
 
+            agentLockTimestamp = now;
             const newHistory: HistoryItem[] = [
                 ...get().history,
                 { role: "user", content: input, id: randomUUID() },
@@ -326,6 +335,16 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
         stopAgent: () => {
             logger.info("Stopping agent...");
             shouldStopAgent = true;
+
+            const currentStatus = get().status;
+            if (currentStatus === "responding" || currentStatus === "executing-tool") {
+                set({ status: "idle" });
+                shouldStopAgent = true;
+                isAgentRunning = false;
+                agentLockTimestamp = 0;
+
+                logger.info("Agent stop requested - will complete when streaming ends");
+            }
         },
 
         confirmToolExecution: async () => {
@@ -341,6 +360,15 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
 
             const toolResults: HistoryItem[] = await Promise.all(
                 pendingToolRequest.calls.map(async (toolCall) => {
+                    if (shouldStopAgent) {
+                        return {
+                            id: randomUUID(),
+                            role: "tool-failure",
+                            toolCallId: toolCall.toolCallId,
+                            toolName: toolCall.toolName,
+                            error: "Execution cancelled by user",
+                        } as HistoryItem;
+                    }
                     try {
                         const output = await runTool(
                             {
@@ -370,6 +398,26 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                     }
                 }),
             );
+
+            if (shouldStopAgent) {
+                set((state) => ({
+                    history: [
+                        ...state.history,
+                        ...toolResults,
+                        {
+                            id: randomUUID(),
+                            role: "assistant",
+                            content:
+                                "[Interrupted by user - The Omnissiah acknowledges your command]",
+                        },
+                    ],
+                    status: "idle",
+                }));
+                shouldStopAgent = false;
+                isAgentRunning = false;
+                agentLockTimestamp = 0;
+                return;
+            }
 
             set((state) => ({
                 history: [...state.history, ...toolResults],
@@ -426,11 +474,13 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
             }
 
             isAgentRunning = true;
+            agentLockTimestamp = Date.now();
 
             try {
                 await _runAgentLogicInternal(retryCount, get, set);
             } finally {
                 isAgentRunning = false;
+                agentLockTimestamp = 0;
             }
         },
     },
@@ -567,18 +617,24 @@ async function _runAgentLogicInternal(
                 if (shouldStopAgent) {
                     logger.info("Agent interrupted by user");
                     shouldStopAgent = false;
+
+                    if (activeStreamTimeout) {
+                        clearTimeout(activeStreamTimeout);
+                        activeStreamTimeout = null;
+                    }
+
                     set({
-                        status: "interrupted",
+                        status: "idle",
                         history: [
                             ...get().history,
                             {
                                 id: randomUUID(),
                                 role: "assistant",
-                                content: "[Interrupted by user]",
+                                content:
+                                    "[Interrupted by user - The Omnissiah acknowledges your command]",
                             },
                         ],
                     });
-                    setTimeout(() => set({ status: "idle" }), 100);
                     return;
                 }
 
@@ -605,7 +661,11 @@ async function _runAgentLogicInternal(
         if (shouldStopAgent) {
             logger.info("Agent interrupted by user after streaming");
             shouldStopAgent = false;
-            set({ status: "idle" });
+
+            const currentStatus = get().status;
+            if (currentStatus !== "idle") {
+                set({ status: "idle" });
+            }
             return;
         }
 

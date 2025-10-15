@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { FileTracker } from "@/agent/fileTracker.js";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { FileTracker } from "@/agent/core/fileTracker.js";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";

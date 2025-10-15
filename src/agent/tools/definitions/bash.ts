@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { tool } from "ai";
 import { spawn } from "child_process";
-import { ToolError } from "../../errors.js";
+import { ToolError } from "../../errors/index.js";
 import logger from "@/logger.js";
 
 const DANGEROUS_COMMANDS = [

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { routeUserQuery, executeWorkflow } from "@/agent/workflows.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { executeWorkflow, routeUserQuery } from "@/agent/workflows/index.js";
 import type { Config } from "@/config.js";
 
 const mockConfig: Config = {
@@ -18,7 +18,7 @@ const mockConfig: Config = {
     userName: "TestUser",
 };
 
-vi.mock("@/agent/llm.js", () => ({
+vi.mock("@/agent/llm/provider.js", () => ({
     createLlmProvider: vi.fn(() => ({
         id: "mock-model",
         provider: "openai",

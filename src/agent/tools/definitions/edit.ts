@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { tool } from "ai";
-import { ToolError } from "../../errors.js";
-import { fileTracker } from "../../fileTracker.js";
-import { autofixEdit } from "../../autofix.js";
+import { ToolError } from "../../errors/index.js";
+import { fileTracker } from "../../core/fileTracker.js";
+import { autofixEdit } from "../../workflows/autofix.js";
 import logger from "@/logger.js";
 
 const replaceActionSchema = z
@@ -84,35 +84,20 @@ export const editTool = tool({
             switch (edit.type) {
                 case "replace": {
                     if (!originalContent.includes(edit.search)) {
-                        // Check if autofix is available and enabled
-                        const shouldAttemptAutofix =
-                            process.env.OPENAI_API_KEY &&
-                            process.env.ENABLE_EDIT_AUTOFIX !== "false";
-
-                        if (shouldAttemptAutofix) {
+                        try {
                             logger.warn(`Search string not found in file. Attempting autofix...`);
-                            try {
-                                const correctedSearch = await autofixEdit(
-                                    originalContent,
-                                    edit.search,
+                            const correctedSearch = await autofixEdit(originalContent, edit.search);
+                            if (correctedSearch) {
+                                logger.info("Autofix successful, using corrected search string");
+                                newContent = originalContent.replace(
+                                    correctedSearch,
+                                    edit.replaceWith,
                                 );
-                                if (correctedSearch) {
-                                    logger.info(
-                                        "Autofix successful, using corrected search string",
-                                    );
-                                    newContent = originalContent.replace(
-                                        correctedSearch,
-                                        edit.replaceWith,
-                                    );
-                                    break;
-                                }
-                            } catch (autofixError) {
-                                logger.error("Autofix threw an error:", autofixError);
-                                // Fall through to the error below
+                                break;
                             }
+                        } catch (autofixError) {
+                            logger.error("Autofix threw an error:", autofixError);
                         }
-
-                        // Autofix failed or disabled
                         throw new ToolError(
                             `The search string was not found in the file. ` +
                                 `Expected to find:\n"${edit.search.substring(0, 100)}${edit.search.length > 100 ? "..." : ""}"\n\n` +

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { detectWorkflow, shouldUseWorkflow } from "@/agent/workflowDetector";
+import { describe, expect, it } from "vitest";
+import { detectWorkflow, shouldUseWorkflow } from "@/agent/workflows/detector";
 
 describe("workflowDetector", () => {
     it("detects code review requests", () => {

@@ -1,11 +1,11 @@
 import React from "react";
 import { render } from "ink-testing-library";
 import { History } from "@/ui/History";
-import { useStore } from "@/agent/state";
+import { useStore } from "@/agent/core/state";
 import { describe, expect, it, vi } from "vitest";
-import type { HistoryItem } from "@/agent/history";
+import type { HistoryItem } from "@/agent/context/history";
 
-vi.mock("@/agent/state");
+vi.mock("@/agent/core/state");
 
 const mockedUseStore = vi.mocked(useStore);
 

@@ -1,5 +1,5 @@
 import type { AssistantContent } from "ai";
-import type { ToolCall } from "./types.js";
+import type { ToolCall } from "../core/types.js";
 
 export type UserMessageItem = {
     id: string;

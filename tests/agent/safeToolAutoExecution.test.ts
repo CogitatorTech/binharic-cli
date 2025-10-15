@@ -1,11 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createBinharicAgent } from "@/agent/agents.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createBinharicAgent } from "@/agent/core/agents.js";
 import type { Config } from "@/config.js";
 import { stepCountIs } from "ai";
-import { createBudgetStopCondition, createErrorThresholdCondition } from "@/agent/loopControl.js";
-import { createToolResultSummarizer } from "@/agent/prepareStep.js";
+import {
+    createBudgetStopCondition,
+    createErrorThresholdCondition,
+} from "@/agent/execution/loopControl.js";
+import { createToolResultSummarizer } from "@/agent/execution/prepareStep.js";
 
-vi.mock("@/agent/llm.js", async (importOriginal) => {
+vi.mock("@/agent/llm/provider.js", async (importOriginal) => {
     const actual = await importOriginal();
     return {
         ...actual,
@@ -16,7 +19,7 @@ vi.mock("@/agent/llm.js", async (importOriginal) => {
     };
 });
 
-vi.mock("@/agent/systemPrompt.js", () => ({
+vi.mock("@/agent/core/systemPrompt.js", () => ({
     generateSystemPrompt: vi.fn(async () => "Test system prompt"),
 }));
 

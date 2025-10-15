@@ -1,6 +1,6 @@
 {
-  "name": "binharic-cli",
-  "version": "0.1.0-alpha.1",
+  "name": "@cogitator/binharic-cli",
+  "version": "0.1.0-alpha.2",
   "description": "A coding agent with the persona of a Tech-Priest of the Adeptus Mechanicus",
   "main": "dist/cli.js",
   "type": "module",
@@ -13,6 +13,9 @@
     "README.md",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "start": "node dist/cli.js",
     "dev": "nodemon",
@@ -28,10 +31,13 @@
   },
   "keywords": [
     "ai",
+    "coding-agent",
+    "ai-assistant",
     "typescript",
-    "cli"
+    "cli",
+    "llm"
   ],
-  "author": "",
+  "author": "Hassan Abedi",
   "license": "MIT",
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.4",

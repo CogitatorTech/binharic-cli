@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-    validateFileEdit,
+    validate,
     validateFileCreation,
     validateFileDeletion,
-    validate,
-} from "@/agent/validation.js";
+    validateFileEdit,
+} from "@/agent/execution/validation.js";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";

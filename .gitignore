@@ -2,7 +2,7 @@
 # Node.js dependencies
 # --------------------
 node_modules/
-package-lock.json
+#package-lock.json
 yarn.lock
 pnpm-lock.yaml
 npm-debug.log*
@@ -161,8 +161,9 @@ site/
 coverage/
 .env
 *_test.txt
-package-lock.json_
 BINHARIC.md
 AGENT.md
 *.tar.gz
 *.tgz
+test.txt
+a.out

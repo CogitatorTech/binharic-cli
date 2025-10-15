@@ -1,7 +1,7 @@
 // src/ui/ContextSummaryDisplay.tsx
 import React from "react";
 import { Box, Text } from "ink";
-import { useStore } from "@/agent/state.js";
+import { useStore } from "@/agent/core/state.js";
 
 export function ContextSummaryDisplay() {
     const contextFiles = useStore((s) => s.contextFiles);

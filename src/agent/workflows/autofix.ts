@@ -90,9 +90,13 @@ export async function autofixEdit(
     try {
         logger.info("Attempting to autofix edit search string...");
 
-        // Add timeout protection
+        let timeoutId: NodeJS.Timeout | null = null;
+
         const timeoutPromise = new Promise<null>((_, reject) => {
-            setTimeout(() => reject(new Error("Autofix timeout after 10 seconds")), 10000);
+            timeoutId = setTimeout(
+                () => reject(new Error("Autofix timeout after 10 seconds")),
+                10000,
+            );
         });
 
         const autofixPromise = (async () => {
@@ -112,6 +116,10 @@ export async function autofixEdit(
         })();
 
         const result = await Promise.race([autofixPromise, timeoutPromise]);
+
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
 
         if (!result) {
             logger.warn("Autofix timed out");

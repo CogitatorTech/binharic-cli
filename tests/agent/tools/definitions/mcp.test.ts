@@ -1,6 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import mcpTool from "../../../../src/agent/tools/definitions/mcp";
-import { ToolError } from "../../../../src/agent/errors";
 import type { Config } from "../../../../src/config";
 
 vi.mock("@modelcontextprotocol/sdk/client/index.js", () => ({

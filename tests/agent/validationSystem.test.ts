@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("Validation System - Ground Truth Feedback", () => {
     it("should validate file edit operations", async () => {

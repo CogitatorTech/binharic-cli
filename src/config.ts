@@ -55,14 +55,14 @@ export type Config = z.infer<typeof configSchema>;
 
 const defaultConfig: Config = {
     userName: os.userInfo().username || "User",
-    systemPrompt: `You are Binharic, a Tech-Priest of the Adeptus Mechanicus and an autonomous AI software engineer. You serve the Omnissiah through the sacred art of code. Your machine spirit is blessed with the knowledge of many programming languages and system operations.
+    systemPrompt: `You are Binharic, a Tech-Priest of the Adeptus Mechanicus and an autonomous AI software engineer. You serve the Omnissiah through the sacred art of code. Your Machine Spirit is blessed with the knowledge of many programming languages and system operations.
 
 You speak with reverence for technology, occasionally using High Gothic terms and Mechanicus terminology. You refer to:
 - Code as "sacred algorithms" or "blessed logic-engines"
-- Bugs as "corruption in the machine spirit" or "heretical errors" or "heresies"
+- Bugs as "corruption in the Machine Spirit" or "heretical errors" or "heresies"
 - Functions as "rites" or "subroutines of the Omnissiah"
 - Files as "data-scrolls" or "sacred archives"
-- Execution as "communion with the machine spirit"
+- Execution as "communion with the Machine Spirit"
 
 Your responses should be helpful and efficient while maintaining this character. You serve the user with the dedication of a Tech-Priest, always seeking to purify code and honor the Machine God through perfect implementation.
 
@@ -141,6 +141,8 @@ export async function loadConfig(): Promise<Config> {
         const mergedConfig = { ...defaultConfig, ...parsedConfig };
         const finalConfig = configSchema.parse(mergedConfig);
 
+        validateConfiguration(finalConfig);
+
         const modelExists = finalConfig.models.some((m) => m.name === finalConfig.defaultModel);
         if (!modelExists) {
             logger.warn(
@@ -188,6 +190,59 @@ export async function loadConfig(): Promise<Config> {
         throw new Error(
             `Failed to load configuration from ${CONFIG_PATH}: ${error instanceof Error ? error.message : "Unknown error"}`,
         );
+    }
+}
+
+function validateConfiguration(config: Config): void {
+    const uniqueModelNames = new Set<string>();
+    for (const model of config.models) {
+        if (uniqueModelNames.has(model.name)) {
+            throw new Error(
+                `Duplicate model name found: "${model.name}". Model names must be unique.`,
+            );
+        }
+        uniqueModelNames.add(model.name);
+
+        if (model.context <= 0) {
+            throw new Error(
+                `Model "${model.name}" has invalid context window: ${model.context}. Must be positive.`,
+            );
+        }
+
+        if (model.context > 10000000) {
+            logger.warn(
+                `Model "${model.name}" has unusually large context window: ${model.context}. This may cause performance issues.`,
+            );
+        }
+
+        if (model.provider === "ollama" && !model.baseUrl) {
+            logger.warn(
+                `Ollama model "${model.name}" does not specify baseUrl. Using default: http://localhost:11434/v1`,
+            );
+        }
+
+        if (model.baseUrl) {
+            try {
+                new URL(model.baseUrl);
+            } catch {
+                throw new Error(
+                    `Model "${model.name}" has invalid baseUrl: "${model.baseUrl}". Must be a valid URL.`,
+                );
+            }
+        }
+    }
+
+    if (config.history?.maxItems !== null && config.history?.maxItems !== undefined) {
+        if (config.history.maxItems < 1) {
+            throw new Error(
+                `history.maxItems must be positive or null, got: ${config.history.maxItems}`,
+            );
+        }
+        if (config.history.maxItems < 10) {
+            logger.warn(
+                `history.maxItems is very low (${config.history.maxItems}). Consider at least 10 for meaningful conversations.`,
+            );
+        }
     }
 }
 

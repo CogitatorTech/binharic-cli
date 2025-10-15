@@ -1,4 +1,4 @@
-import { createLlmProvider } from "./llm.js";
+import { createLlmProvider } from "../llm/provider.js";
 import type { Config } from "@/config.js";
 import logger from "@/logger.js";
 

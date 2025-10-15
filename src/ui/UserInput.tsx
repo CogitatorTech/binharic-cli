@@ -1,14 +1,11 @@
-// src/ui/UserInput.tsx
-// CORRECTED: Updated the status check to use the new 'responding' state.
-
 import React, { useEffect, useState } from "react";
 import { Box, Text, useApp, useInput } from "ink";
 import TextInput from "ink-text-input";
-import { useStore } from "@/agent/state.js";
+import { useStore } from "@/agent/core/state.js";
 import { useShallow } from "zustand/react/shallow";
-import { FileSearch } from "./FileSearch.js";
-import { HighlightedInput } from "./HighlightedInput.js";
 import { CommandAutocomplete } from "./CommandAutocomplete.js";
+import { HighlightedInput } from "./HighlightedInput.js";
+import { FileSearch } from "./FileSearch.js";
 import { getCommandSuggestions } from "./commandRegistry.js";
 import { runTool } from "@/agent/tools/index.js";
 import { randomUUID } from "crypto";
@@ -44,6 +41,7 @@ export function UserInput() {
         addCommandToHistory,
         addContextFile,
         config,
+        stopAgent,
     } = useStore(
         useShallow((s) => ({
             startAgent: s.actions.startAgent,
@@ -60,14 +58,12 @@ export function UserInput() {
             addCommandToHistory: s.actions.addCommandToHistory,
             addContextFile: s.actions.addContextFile,
             config: s.config,
+            stopAgent: s.actions.stopAgent,
         })),
     );
     const { exit } = useApp();
 
-    // CORRECTED: The 'thinking' status is now 'responding'.
     const isAgentBusy = status === "responding" || status === "executing-tool";
-
-    // Allow typing at all times, but prevent new agent requests while busy
     const canSubmitNewRequest = status === "idle" || status === "error";
 
     useEffect(() => {
@@ -119,6 +115,10 @@ export function UserInput() {
 
     useInput((input, key) => {
         if (key.escape) {
+            if (isAgentBusy) {
+                stopAgent();
+                return;
+            }
             if (commandAutocompleteActive) {
                 setCommandAutocompleteActive(false);
                 setInputValue("");
@@ -164,7 +164,6 @@ export function UserInput() {
             return;
         }
 
-        // Allow command history navigation at all times
         if (key.upArrow) {
             const prevCommand = getPreviousCommand();
             if (prevCommand !== null) {
@@ -269,11 +268,12 @@ export function UserInput() {
                                 providers.get(model.provider)!.push(model);
                             });
 
-                            let output = "\n╭─ Available Models ─╮\n";
+                            let output = "\n┍─ Available Models ┎\n";
 
                             providers.forEach((models, provider) => {
-                                const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
-                                output += `\n${providerName}:\n`;
+                                const providerName =
+                                    provider.charAt(0).toUpperCase() + provider.slice(1);
+                                output += `${providerName}:\n`;
 
                                 models.forEach((model) => {
                                     const isDefault = model.name === config.defaultModel;
@@ -284,9 +284,8 @@ export function UserInput() {
                             });
 
                             output += "\nUse '/model <name>' to switch models\n";
-                            output += "╰─────────────────────╯\n";
+                            output += "┰─────────────────────────────┚\n";
 
-                            // Append an assistant message with the models list to history
                             useStore.setState((state) => ({
                                 history: [
                                     ...state.history,
@@ -359,7 +358,7 @@ export function UserInput() {
                         onSubmit={handleSubmit}
                         placeholder={
                             isAgentBusy
-                                ? "Agent is working..."
+                                ? "Agent is working... (Press Esc to cancel)"
                                 : "Type your message or @path/to/file"
                         }
                     />

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { tool } from "ai";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { ToolError } from "../../errors.js";
+import { ToolError } from "../../errors/index.js";
 import type { Config } from "@/config";
 
 type MCPResult = {
@@ -58,7 +58,12 @@ export const mcpTool = tool({
             }
             throw new ToolError("An unknown error occurred with MCP tool.");
         } finally {
-            await transport.close();
+            try {
+                await client.close();
+            } catch (closeError) {}
+            try {
+                await transport.close();
+            } catch (closeError) {}
         }
     },
 });

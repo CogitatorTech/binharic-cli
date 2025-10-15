@@ -1,10 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+    combinePrepareSteps,
+    createAdaptiveSystemPrompt,
     createContextManager,
     createToolResultSummarizer,
-    createAdaptiveSystemPrompt,
-    combinePrepareSteps,
-} from "@/agent/prepareStep.js";
+} from "@/agent/execution/prepareStep.js";
 
 describe("PrepareStep Module", () => {
     describe("createContextManager", () => {

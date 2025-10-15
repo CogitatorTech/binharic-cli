@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 describe("Type Safety Bug Fixes", () => {
     it("should properly type toolCall.args as Record<string, unknown>", () => {

@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { saveConfig, loadConfig } from "@/config.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { loadConfig, saveConfig } from "@/config.js";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";

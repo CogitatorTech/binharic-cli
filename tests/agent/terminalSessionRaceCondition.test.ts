@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-    runInTerminalTool,
-    getTerminalOutputTool,
     cleanupAllSessions,
+    getTerminalOutputTool,
+    runInTerminalTool,
 } from "@/agent/tools/definitions/terminalSession.js";
 
 describe("Terminal Session - Race Conditions and Memory Leaks", () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { runTool } from "../../src/agent/tools/index.js";
 import type { Config } from "../../src/config.js";
 

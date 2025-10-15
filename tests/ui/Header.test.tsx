@@ -1,7 +1,7 @@
 import React from "react";
 import { render } from "ink-testing-library";
 import { Header } from "@/ui/Header.js";
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("Header", () => {
     it("should render the header with logo and tips", () => {

@@ -5,7 +5,7 @@ import { createOllama } from "ollama-ai-provider-v2";
 import { createOpenAI } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
 import { createAnthropic } from "@ai-sdk/anthropic";
-import { FatalError, TransientError } from "@/agent/errors";
+import { FatalError, TransientError } from "@/agent/errors/index";
 import { streamText } from "ai";
 
 vi.mock("ollama-ai-provider-v2", () => ({

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { tool } from "ai";
 import fs from "fs/promises";
-import { ToolError } from "@/agent/errors.js";
+import { ToolError } from "@/agent/errors/index.js";
 
 export const listTool = tool({
     description: "List files in a directory.",

@@ -1,9 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import {
-    StoppingConditionManager,
-    createStopWhen,
-    type StoppingConfig,
-} from "@/agent/stoppingConditions.js";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createStopWhen, StoppingConditionManager } from "@/agent/execution/stoppingConditions.js";
 
 describe("Stopping Conditions Module", () => {
     let manager: StoppingConditionManager;

@@ -3,7 +3,7 @@
 
 import React from "react";
 import { Box, Text } from "ink";
-import { useStore } from "@/agent/state.js";
+import { useStore } from "@/agent/core/state.js";
 import { getConfigDir } from "@/config.js";
 import path from "path";
 import { useShallow } from "zustand/react/shallow";
@@ -50,6 +50,7 @@ export function Footer() {
     const modelName = config?.defaultModel ?? "loading...";
     const statusText = statusTexts[status];
     const logsDir = path.join(getConfigDir(), "logs");
+    const isAgentBusy = status === "responding" || status === "executing-tool";
 
     return (
         <Box flexDirection="column" marginTop={1}>
@@ -57,6 +58,12 @@ export function Footer() {
                 <Box marginBottom={1} justifyContent="center">
                     <Spinner type="dots" />
                     {statusText && <Text> {statusText}</Text>}
+                </Box>
+            )}
+
+            {isAgentBusy && (
+                <Box marginBottom={1} justifyContent="center">
+                    <Text color="yellow">Press ESC to cancel</Text>
                 </Box>
             )}
 

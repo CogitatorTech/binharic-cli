@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 import { tool } from "ai";
-import { ToolError } from "../../errors.js";
+import { ToolError } from "../../errors/index.js";
 import logger from "@/logger.js";
 import { execFile } from "child_process";
 import { promisify } from "util";
@@ -35,7 +35,7 @@ export const diffFilesTool = tool({
             // Run diff command
             try {
                 await execFileAsync("diff", [`-u${unified}`, file1, file2]);
-                return "Files are identical. The machine spirits are in harmony.";
+                return "Files are identical. The Machine Spirits are in harmony.";
             } catch (error: unknown) {
                 const execError = error as { code?: number; stdout?: string; stderr?: string };
                 // diff exits with code 1 when files differ, which is not an error

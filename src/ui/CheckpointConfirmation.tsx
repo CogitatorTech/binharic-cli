@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import { useStore } from "@/agent/state.js";
+import { useStore } from "@/agent/core/state.js";
 import { useShallow } from "zustand/react/shallow";
 
 export function CheckpointConfirmation() {
@@ -35,16 +35,16 @@ export function CheckpointConfirmation() {
         }
     };
 
-    const getRiskSymbol = (level: string) => {
+    const getRiskLabel = (level: string) => {
         switch (level) {
             case "critical":
-                return "⚠️  CRITICAL";
+                return "CRITICAL";
             case "high":
-                return "⚡ HIGH RISK";
+                return "HIGH RISK";
             case "medium":
-                return "⚙️  MODERATE";
+                return "MODERATE";
             default:
-                return "✓ LOW RISK";
+                return "LOW RISK";
         }
     };
 
@@ -58,7 +58,7 @@ export function CheckpointConfirmation() {
         >
             <Box>
                 <Text bold color={getRiskColor(pendingCheckpoint.riskLevel)}>
-                    {getRiskSymbol(pendingCheckpoint.riskLevel)} - Sacred Checkpoint Required
+                    {getRiskLabel(pendingCheckpoint.riskLevel)} - Sacred Checkpoint Required
                 </Text>
             </Box>
 

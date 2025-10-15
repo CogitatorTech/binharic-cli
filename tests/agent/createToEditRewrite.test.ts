@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useStore } from "@/agent/state";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useStore } from "@/agent/core/state";
 import fs from "fs";
 
-vi.mock("@/agent/llm", async (importOriginal) => {
+vi.mock("@/agent/llm/provider.js", async (importOriginal) => {
     const actual = await importOriginal();
     return {
         ...actual,
@@ -10,7 +10,7 @@ vi.mock("@/agent/llm", async (importOriginal) => {
     };
 });
 
-vi.mock("@/agent/systemPrompt", () => ({
+vi.mock("@/agent/core/systemPrompt.js", () => ({
     generateSystemPrompt: vi.fn(async () => "Test system prompt"),
 }));
 
@@ -45,6 +45,7 @@ describe("Tool call rewrite: create -> edit when file exists", () => {
             branchName: "test-branch",
             pendingToolRequest: null,
             pendingCheckpoint: null,
+            contextFiles: [],
         } as any);
     });
 
@@ -52,7 +53,7 @@ describe("Tool call rewrite: create -> edit when file exists", () => {
         const tempPath = "tmp/create-to-edit-rewrite.md";
         createExistingFile(tempPath, "original");
 
-        const { streamAssistantResponse } = await import("@/agent/llm");
+        const { streamAssistantResponse } = await import("@/agent/llm/provider.js");
         vi.mocked(streamAssistantResponse).mockResolvedValue({
             textStream: (async function* () {})(),
             toolCalls: Promise.resolve([

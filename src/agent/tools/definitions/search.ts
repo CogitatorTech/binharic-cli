@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { tool } from "ai";
 import { spawn } from "child_process";
-import { ToolError } from "../../errors.js";
-import type { Config } from "@/config.js";
+import { ToolError } from "../../errors/index.js";
 
 export const searchTool = tool({
     description: "Search for files by name.",
@@ -88,6 +87,7 @@ export const searchTool = tool({
                     }
                 });
             } catch (err: unknown) {
+                if (timeoutId) clearTimeout(timeoutId);
                 const message = err instanceof Error ? err.message : String(err);
                 reject(new ToolError(`Command failed to start: ${message}`));
             }

@@ -37,34 +37,34 @@ help: ## Show this help message
 	awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 install: ## Install project dependencies
-	$(PACKAGE_MANAGER) install --legacy-peer-deps
+	@$(PACKAGE_MANAGER) install --legacy-peer-deps
 
 build: check-deps ## Build Binharic
-	$(PACKAGE_MANAGER) run build
+	@$(PACKAGE_MANAGER) run build
 
 run: build ## Start Binharic in terminal
-	$(PACKAGE_MANAGER) start
+	@$(PACKAGE_MANAGER) start
 
 clean: ## Remove build artifacts
-	rm -rf dist $(NODE_MODULES_DIR) $(REMOVABLE_THINGS)
+	@rm -rf dist $(NODE_MODULES_DIR) $(REMOVABLE_THINGS)
 
 # ==============================================================================
 # DEVELOPMENT
 # ==============================================================================
 test: check-deps ## Run the test suite
-	$(PACKAGE_MANAGER) test
+	@$(PACKAGE_MANAGER) test
 
 coverage: check-deps ## Run the test suite and generate a coverage report
-	$(PACKAGE_MANAGER) run coverage
+	@$(PACKAGE_MANAGER) run coverage
 
 lint: check-deps ## Run linter checks
-	$(PACKAGE_MANAGER) run lint
+	@$(PACKAGE_MANAGER) run lint
 
 typecheck: check-deps ## Run TypeScript type checks
-	$(PACKAGE_MANAGER) run typecheck
+	@$(PACKAGE_MANAGER) run typecheck
 
 format: check-deps ## Format code with Prettier
-	$(PACKAGE_MANAGER) run format
+	@$(PACKAGE_MANAGER) run format
 
 # ==============================================================================
 # GIT HOOKS
@@ -87,28 +87,28 @@ test-hooks: ## Test Git hooks on all files
 # PUBLISHING
 # ==============================================================================
 npm-login: ## Log in to npm registry
-	$(PACKAGE_MANAGER) login
+	@$(PACKAGE_MANAGER) login
 
 npm-whoami: ## Show current npm user (if logged in)
-	-$(PACKAGE_MANAGER) whoami
+	@-$(PACKAGE_MANAGER) whoami
 
 pack: build ## Create npm tarball (binharic-cli-<version>.tgz)
-	$(PACKAGE_MANAGER) pack
+	@$(PACKAGE_MANAGER) pack
 
 pack-dry-run: build ## Preview files that would be packed
-	$(PACKAGE_MANAGER) pack --dry-run
+	@$(PACKAGE_MANAGER) pack --dry-run
 
 publish-dry-run: ## Simulate npm publish (no registry changes)
-	$(PACKAGE_MANAGER) publish --dry-run
+	@$(PACKAGE_MANAGER) publish --access public --dry-run
 
 publish: ## Publish the package to npm (runs build via prepublishOnly)
-	$(PACKAGE_MANAGER) publish
+	@$(PACKAGE_MANAGER) publish --access public
 
 version-patch: ## Bump patch version (x.y.z -> x.y.(z+1))
-	$(PACKAGE_MANAGER) version patch
+	@$(PACKAGE_MANAGER) version patch
 
 version-minor: ## Bump minor version (x.y.z -> x.(y+1).0)
-	$(PACKAGE_MANAGER) version minor
+	@$(PACKAGE_MANAGER) version minor
 
 version-major: ## Bump major version ((x+1).0.0)
-	$(PACKAGE_MANAGER) version major
+	@$(PACKAGE_MANAGER) version major

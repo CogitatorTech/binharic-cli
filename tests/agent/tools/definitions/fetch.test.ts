@@ -1,6 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import fetchTool from "../../../../src/agent/tools/definitions/fetch";
-import { ToolError } from "../../../../src/agent/errors";
 
 global.fetch = vi.fn();
 

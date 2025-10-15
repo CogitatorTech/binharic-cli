@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 import { tool } from "ai";
-import { ToolError } from "../../errors.js";
+import { ToolError } from "../../errors/index.js";
 import logger from "@/logger.js";
 import fs from "fs/promises";
 import path from "path";

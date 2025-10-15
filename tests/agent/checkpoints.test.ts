@@ -1,13 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
-    requestCheckpoint,
     assessRiskLevel,
     calculateConfidence,
-    setCheckpointHandler,
-    clearCheckpointHandler,
     type CheckpointRequest,
-    type CheckpointDecision,
-} from "@/agent/checkpoints.js";
+    clearCheckpointHandler,
+    requestCheckpoint,
+    setCheckpointHandler,
+} from "@/agent/core/checkpoints.js";
 
 describe("Checkpoints Module", () => {
     beforeEach(() => {

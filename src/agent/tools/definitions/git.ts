@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { tool } from "ai";
 import simpleGit from "simple-git";
-import { ToolError } from "../../errors.js";
+import { ToolError } from "../../errors/index.js";
 import logger from "@/logger.js";
 
 export const gitStatusTool = tool({
     description:
-        "Get the current git status of the repository. Shows staged, modified, and untracked files. The machine spirit reveals the state of the sacred code repository.",
+        "Get the current git status of the repository. Shows staged, modified, and untracked files. The Machine Spirit reveals the state of the sacred code repository.",
     inputSchema: z.object({}).strict(),
     execute: async () => {
         try {

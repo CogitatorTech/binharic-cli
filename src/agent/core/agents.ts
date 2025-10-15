@@ -1,23 +1,23 @@
-import { Experimental_Agent as Agent, stepCountIs, Output } from "ai";
+import { Experimental_Agent as Agent, Output, stepCountIs } from "ai";
 import { z } from "zod";
 import type { Config } from "@/config.js";
-import { createLlmProvider } from "./llm.js";
-import { tools } from "./tools/index.js";
+import { createLlmProvider } from "../llm/provider.js";
+import { tools } from "../tools/index.js";
 import { generateSystemPrompt } from "./systemPrompt.js";
 import logger from "@/logger.js";
-import { createWorkflowTool } from "./tools/definitions/workflow.js";
+import { createWorkflowTool } from "../tools/definitions/workflow.js";
 import {
     createBudgetStopCondition,
+    createCompletionCondition,
     createErrorThresholdCondition,
     createValidationStopCondition,
-    createCompletionCondition,
-} from "./loopControl.js";
+} from "../execution/loopControl.js";
 import {
+    combinePrepareSteps,
+    createAdaptiveSystemPrompt,
     createContextManager,
     createToolResultSummarizer,
-    createAdaptiveSystemPrompt,
-    combinePrepareSteps,
-} from "./prepareStep.js";
+} from "../execution/prepareStep.js";
 
 export async function createBinharicAgent(config: Config) {
     const modelConfig = config.models.find((m) => m.name === config.defaultModel);

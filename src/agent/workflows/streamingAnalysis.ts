@@ -1,7 +1,7 @@
-import { streamObject, generateObject } from "ai";
+import { generateObject, streamObject } from "ai";
 import { z } from "zod";
 import type { Config } from "@/config.js";
-import { createLlmProvider } from "./llm.js";
+import { createLlmProvider } from "../llm/provider.js";
 import logger from "@/logger.js";
 
 const documentationSchema = z.object({

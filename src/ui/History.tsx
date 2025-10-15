@@ -1,8 +1,8 @@
-import { Box } from "ink";
 import React from "react";
-import { useStore } from "@/agent/state.js";
+import { Box } from "ink";
+import { useStore } from "@/agent/core/state.js";
+import type { HistoryItem } from "@/agent/context/history.js";
 import { HistoryItemDisplay } from "./HistoryItemDisplay.js";
-import type { HistoryItem } from "@/agent/history.js";
 
 export function History() {
     const history = useStore((s) => s.history);

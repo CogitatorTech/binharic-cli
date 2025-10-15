@@ -1,6 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Config } from "../../src/config";
+import {
+    createCodeAnalysisAgent,
+    createRefactoringAgent,
+    createSecurityAuditAgent,
+    createTestGenerationAgent,
+} from "../../src/agent/core/agents";
 
-vi.mock("../../src/agent/llm", () => ({
+vi.mock("../../src/agent/llm/provider.js", () => ({
     createLlmProvider: vi.fn(() => ({ id: "mock", provider: "openai" })),
 }));
 
@@ -8,29 +15,28 @@ const captured: any[] = [];
 
 vi.mock("ai", async (importOriginal) => {
     const actual: any = await importOriginal();
+
     class TestAgent {
         options: any;
+
         constructor(options: any) {
             this.options = options;
             captured.push(options);
         }
+
         async generate(_: any) {
             return { text: "" };
         }
+
         stream(_: any) {
-            return { textStream: (async function* () {})() } as any;
+            return {
+                textStream: (async function* () {})(),
+            } as any;
         }
     }
+
     return { ...actual, Experimental_Agent: TestAgent };
 });
-
-import type { Config } from "../../src/config";
-import {
-    createCodeAnalysisAgent,
-    createSecurityAuditAgent,
-    createRefactoringAgent,
-    createTestGenerationAgent,
-} from "../../src/agent/agents";
 
 const baseConfig: Config = {
     userName: "tester",

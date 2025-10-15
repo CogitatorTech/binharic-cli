@@ -3,8 +3,8 @@
 
 import { z } from "zod";
 import { tool } from "ai";
-import { spawn, type ChildProcess } from "child_process";
-import { ToolError } from "../../errors.js";
+import { type ChildProcess, spawn } from "child_process";
+import { ToolError } from "../../errors/index.js";
 
 // Global session storage
 const sessions = new Map<
@@ -25,6 +25,7 @@ const MAX_SESSIONS = 10;
 const MAX_COMMAND_LENGTH = 10000;
 const MAX_OUTPUT_SIZE = 1024 * 1024; // 1MB
 const BACKGROUND_TIMEOUT_MS = 300000; // 5 minutes
+const MAX_OUTPUT_LINES = 1000; // Max lines in output buffer
 
 // Cleanup function to prevent memory leaks
 function cleanupSession(sessionId: string) {
@@ -182,6 +183,10 @@ export const runInTerminalTool = tool({
                         );
                     }
                     return;
+                }
+
+                if (output.length >= MAX_OUTPUT_LINES) {
+                    output.shift();
                 }
 
                 output.push(text);

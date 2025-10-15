@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
-    handleAISDKError,
-    isAbortError,
-    handleStreamWithErrors,
-    retryWithBackoff,
-    StreamAbortController,
     createAbortableStream,
     executeWithRecovery,
-} from "@/agent/errorHandling.js";
+    handleAISDKError,
+    handleStreamWithErrors,
+    isAbortError,
+    retryWithBackoff,
+    StreamAbortController,
+} from "@/agent/errors/errorHandling.js";
 
 describe("Error Handling Module", () => {
     describe("handleAISDKError", () => {

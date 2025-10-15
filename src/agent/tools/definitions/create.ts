@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { tool } from "ai";
-import { fileTracker } from "../../fileTracker.js";
-import { ToolError } from "../../errors.js";
+import { fileTracker } from "../../core/fileTracker.js";
+import { ToolError } from "../../errors/index.js";
 
 export const createTool = tool({
     description: `Create a new file with specified content. The Omnissiah blesses new code into existence.

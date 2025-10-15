@@ -1,12 +1,12 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
     createBudgetStopCondition,
-    createSuccessCondition,
-    createValidationStopCondition,
-    createErrorThresholdCondition,
-    createToolSequenceCondition,
     createCompletionCondition,
-} from "@/agent/loopControl.js";
+    createErrorThresholdCondition,
+    createSuccessCondition,
+    createToolSequenceCondition,
+    createValidationStopCondition,
+} from "@/agent/execution/loopControl.js";
 
 describe("Loop Control Module", () => {
     describe("createBudgetStopCondition", () => {

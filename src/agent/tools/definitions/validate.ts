@@ -1,7 +1,7 @@
-import { z } from "zod";
 import { tool } from "ai";
-import { validate, type ValidationStrategy } from "@/agent/validation.js";
-import { ToolError } from "@/agent/errors.js";
+import { z } from "zod";
+import { validate, type ValidationStrategy } from "@/agent/execution/validation.js";
+import { ToolError } from "@/agent/errors/index.js";
 
 export const validateTool = tool({
     description:

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("UI Components - Input Handling Edge Cases", () => {
     it("should handle rapid input changes", () => {

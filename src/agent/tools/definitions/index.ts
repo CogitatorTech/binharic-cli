@@ -8,7 +8,7 @@ import fetchTool from "./fetch.js";
 import mcpTool from "./mcp.js";
 import searchTool from "./search.js";
 import insertEditIntoFileTool from "./insertEditIntoFile.js";
-import { runInTerminalTool, getTerminalOutputTool } from "./terminalSession.js";
+import { getTerminalOutputTool, runInTerminalTool } from "./terminalSession.js";
 import getErrorsTool from "./getErrors.js";
 import grepSearchTool from "./grepSearch.js";
 import validateTool from "./validate.js";

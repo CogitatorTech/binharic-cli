@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { getCommandSuggestions, COMMAND_REGISTRY, getCategoryColor } from "@/ui/commandRegistry.js";
+import { describe, expect, it } from "vitest";
+import { COMMAND_REGISTRY, getCategoryColor, getCommandSuggestions } from "@/ui/commandRegistry.js";
 
 describe("Command Registry and Autocomplete", () => {
     describe("COMMAND_REGISTRY", () => {

@@ -5,7 +5,7 @@ import { render } from "ink";
 import App from "./ui/App.js";
 import logger from "./logger.js";
 import { cleanupAllSessions } from "./agent/tools/definitions/terminalSession.js";
-import { useStore } from "./agent/state.js";
+import { useStore } from "./agent/core/state.js";
 
 const originalStderrWrite = process.stderr.write.bind(process.stderr);
 
@@ -76,12 +76,24 @@ process.on("warning", (warning) => {
 
 logger.info("Binharic application started. Praise the Omnissiah!");
 
-const { unmount } = render(React.createElement(App));
+const { unmount, waitUntilExit } = render(React.createElement(App));
 
 let ctrlCPressCount = 0;
 let ctrlCTimeout: NodeJS.Timeout | null = null;
+let exitCallbackSet = false;
 
-process.on("SIGINT", () => {
+export function setExitCallback(callback: () => void) {
+    if (!exitCallbackSet) {
+        exitCallbackSet = true;
+        (globalThis as any).__binharic_exit_callback = callback;
+    }
+}
+
+function getExitCallback(): (() => void) | null {
+    return (globalThis as any).__binharic_exit_callback || null;
+}
+
+const handleSIGINT = () => {
     ctrlCPressCount++;
 
     if (ctrlCTimeout) {
@@ -94,29 +106,64 @@ process.on("SIGINT", () => {
         if (state.status === "responding" || state.status === "executing-tool") {
             logger.info("Ctrl+C pressed - Stopping current agent communication...");
             state.actions.stopAgent();
-            console.log(
-                "\nWarning: Agent communication stopped. Press Ctrl+C again within 2 seconds to exit.\n",
-            );
         } else {
             logger.info("Ctrl+C pressed - Press again within 2 seconds to exit");
-            console.log("\nWarning: Press Ctrl+C again within 2 seconds to exit.\n");
+            console.log("\n╭────────────────────────────────────────────────────╮");
+            console.log("│  Press Ctrl+C again within 2 seconds to exit      │");
+            console.log("╰────────────────────────────────────────────────────╯\n");
         }
 
         ctrlCTimeout = setTimeout(() => {
             ctrlCPressCount = 0;
             ctrlCTimeout = null;
         }, 2000);
-    } else if (ctrlCPressCount >= 2) {
-        logger.info("Double Ctrl+C detected - Exiting application...");
-        console.log("\nExiting Binharic. May the Omnissiah preserve our data.\n");
+
+        return;
+    }
+
+    if (ctrlCPressCount >= 2) {
+        logger.info("Double Ctrl+C detected - Calling exit handler for graceful shutdown...");
+        console.log("\n╭────────────────────────────────────────────────────╮");
+        console.log("│  Exiting Binharic...                               │");
+        console.log("│  May the Omnissiah preserve our data.             │");
+        console.log("╰────────────────────────────────────────────────────╯\n");
+
+        if (ctrlCTimeout) {
+            clearTimeout(ctrlCTimeout);
+            ctrlCTimeout = null;
+        }
+
         cleanupAllSessions();
+
+        if (process.stdin.isTTY && process.stdin.setRawMode) {
+            process.stdin.setRawMode(false);
+        }
+
+        const exitCallback = getExitCallback();
+        if (exitCallback) {
+            exitCallback();
+        }
+
         unmount();
+        logger.info("Application exit complete");
         process.exit(0);
     }
-});
+};
+
+process.on("SIGINT", handleSIGINT);
 
 process.on("SIGTERM", () => {
-    logger.info("Received SIGTERM, powering down machine spirit. The Omnissiah protects...");
+    logger.info("Received SIGTERM, powering down Machine Spirit. The Omnissiah protects...");
+
+    if (ctrlCTimeout) {
+        clearTimeout(ctrlCTimeout);
+        ctrlCTimeout = null;
+    }
+
+    if (process.stdin.isTTY && process.stdin.setRawMode) {
+        process.stdin.setRawMode(false);
+    }
+
     cleanupAllSessions();
     unmount();
     process.exit(0);

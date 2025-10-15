@@ -3,8 +3,8 @@
 
 import { z } from "zod";
 import { tool } from "ai";
-import { ToolError } from "../../errors.js";
-import { fileTracker } from "../../fileTracker.js";
+import { ToolError } from "../../errors/index.js";
+import { fileTracker } from "../../core/fileTracker.js";
 
 export const insertEditIntoFileTool = tool({
     description: `Edit a file with smart diff application. The system intelligently applies your changes with minimal hints.
@@ -120,10 +120,17 @@ function applySmartEdit(originalContent: string, editCode: string): string {
     const lines = originalContent.split("\n");
     const editLines = cleanedEdit.split("\n");
 
-    if (editLines.length < lines.length * 0.3) {
+    if (editLines.length === 0 || cleanedEdit.trim().length === 0) {
+        throw new ToolError(
+            "Edit code is empty after removing markers. Provide actual code to insert.",
+        );
+    }
+
+    const SIMILARITY_THRESHOLD = 0.3;
+    if (editLines.length < lines.length * SIMILARITY_THRESHOLD) {
         const firstNonEmptyLines = editLines
             .filter((line) => line.trim())
-            .slice(0, Math.min(2, editLines.length));
+            .slice(0, Math.min(3, editLines.length));
 
         if (firstNonEmptyLines.length > 0) {
             const searchPattern = firstNonEmptyLines.join("\n");
@@ -140,10 +147,106 @@ function applySmartEdit(originalContent: string, editCode: string): string {
                     originalContent.substring(endPoint)
                 );
             }
+
+            const FUZZY_MATCH_THRESHOLD = 0.7;
+            const matchResult = findBestMatch(
+                originalContent,
+                searchPattern,
+                FUZZY_MATCH_THRESHOLD,
+            );
+            if (matchResult.found) {
+                return (
+                    originalContent.substring(0, matchResult.startIndex) +
+                    cleanedEdit +
+                    originalContent.substring(matchResult.endIndex)
+                );
+            }
         }
     }
 
-    return cleanedEdit;
+    if (cleanedEdit.length >= originalContent.length * 0.8) {
+        return cleanedEdit;
+    }
+
+    throw new ToolError(
+        "Could not find a safe location to apply the edit. The edit context does not match the file content. " +
+            "Please read the file first and provide more specific context, or use the 'edit' tool with 'overwrite' action.",
+    );
+}
+
+function findBestMatch(
+    content: string,
+    pattern: string,
+    threshold: number,
+): { found: boolean; startIndex: number; endIndex: number } {
+    const contentLines = content.split("\n");
+    const patternLines = pattern.split("\n");
+
+    let bestScore = 0;
+    let bestIndex = -1;
+
+    for (let i = 0; i <= contentLines.length - patternLines.length; i++) {
+        const segment = contentLines.slice(i, i + patternLines.length).join("\n");
+        const score = calculateSimilarity(segment, pattern);
+
+        if (score > bestScore && score >= threshold) {
+            bestScore = score;
+            bestIndex = i;
+        }
+    }
+
+    if (bestIndex !== -1) {
+        const startIndex =
+            contentLines.slice(0, bestIndex).join("\n").length + (bestIndex > 0 ? 1 : 0);
+        const matchLength = contentLines
+            .slice(bestIndex, bestIndex + patternLines.length)
+            .join("\n").length;
+        return {
+            found: true,
+            startIndex,
+            endIndex: startIndex + matchLength,
+        };
+    }
+
+    return { found: false, startIndex: -1, endIndex: -1 };
+}
+
+function calculateSimilarity(str1: string, str2: string): number {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+
+    if (longer.length === 0) return 1.0;
+
+    const editDistance = levenshteinDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+}
+
+function levenshteinDistance(str1: string, str2: string): number {
+    const matrix: number[][] = [];
+
+    for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1,
+                );
+            }
+        }
+    }
+
+    return matrix[str2.length][str1.length];
 }
 
 export default insertEditIntoFileTool;

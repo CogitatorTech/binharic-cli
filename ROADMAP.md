@@ -19,7 +19,7 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Token-based context window management
     - [x] Automatic context trimming for long conversations
     - [x] History preservation across sessions
-    - [x] Adaptive context management with prepareStep callbacks
+    - [ ] Adaptive context management with prepareStep callbacks
     - [x] Tool result summarization for longer agentic loops
     - [ ] Intelligent context compression
     - [ ] Semantic context pruning
@@ -27,11 +27,11 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Multi-step tool calling with retry logic
     - [x] Transient error handling with exponential backoff
     - [x] Tool execution confirmation flow
-    - [x] AI SDK 5 Agent class integration
-    - [x] Automatic loop control with stopWhen conditions**
-    - [x] Budget-based stopping conditions
+    - [ ] AI SDK 5 Agent class integration (currently using AI SDK streaming plus tool calling directly)
+    - [ ] Automatic loop control with stopWhen conditions
+    - [ ] Budget-based stopping conditions
     - [x] Error threshold conditions
-    - [x] Validation-based stopping
+    - [ ] Validation-based stopping
     - [x] Completion detection conditions
     - [ ] Parallel tool execution for independent operations
     - [ ] Automatic tool dependency resolution
@@ -54,11 +54,11 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Smart file editing with diff application
     - [x] List directory contents
     - [x] File search capabilities
-    - [x] Integrated with AI SDK Agent class
+    - [x] Integrated with AI SDK tool calling
     - [x] Automatic file tracking for edits (no manual read required)
     - [x] File staleness detection
     - [x] Memory-efficient file tracking (1000 file limit)
-    - [ ] File comparison and diffing
+    - [x] File comparison and diffing
     - [ ] Bulk file operations
     - [ ] File watching for changes
 - **Code Intelligence**
@@ -78,7 +78,7 @@ It includes planned features, improvements, and their current implementation sta
     - [ ] Interactive shell support
     - [ ] Command history and replay
     - [ ] Environment variable management
-- **Web & Network**
+- **Web and Network**
     - [x] URL fetching with HTML-to-text conversion
     - [x] Content markup stripping
     - [ ] API integration templates
@@ -103,7 +103,7 @@ It includes planned features, improvements, and their current implementation sta
     - [x] File search with @ mention
     - [x] Non-blocking UI during LLM responses
     - [x] Command syntax highlighting (partial match in yellow, full match in cyan)
-    - [x] Colored help menu items**
+    - [x] Colored help menu items\*\*
     - [x] Clean message display (no "Binharic:" prefix)
     - [x] Dynamic username from system (not hardcoded)
     - [x] Tool results hidden from UI (only failures shown)
@@ -122,7 +122,7 @@ It includes planned features, improvements, and their current implementation sta
     - [ ] Undo/redo for file operations
     - [ ] Session saving and loading
 
-### 4. Configuration & Customization
+### 4. Configuration and Customization
 
 - **Configuration Management**
     - [x] JSON5 configuration format
@@ -131,16 +131,16 @@ It includes planned features, improvements, and their current implementation sta
     - [x] API key management
     - [x] History size limits
     - [ ] Configuration profiles (development, production, etc.)
-    - [ ] Configuration validation with detailed error messages
+    - [x] Configuration validation with detailed error messages
     - [ ] Hot-reload configuration changes
-- **Personality & Behavior**
+- **Personality and Behavior**
     - [x] Adeptus Mechanicus character and terminology
     - [x] Customizable system prompts
     - [ ] Multiple personality presets
     - [ ] Conversation style customization
     - [ ] Output verbosity levels
 
-### 5. Performance & Reliability
+### 5. Performance and Reliability
 
 - **Error Handling**
     - [x] Categorized errors (Fatal, Transient, Tool)
@@ -173,7 +173,7 @@ It includes planned features, improvements, and their current implementation sta
     - [ ] Usage analytics (tokens, costs)
     - [ ] Health checks and diagnostics
 
-### 6. Testing & Quality
+### 6. Testing and Quality
 
 - **Test Coverage**
     - [x] Unit tests for core functionality
@@ -213,7 +213,7 @@ It includes planned features, improvements, and their current implementation sta
     - [ ] Plugin development guide
     - [ ] Deployment guide
 
-### 8. Distribution & Deployment
+### 8. Distribution and Deployment
 
 - **Package Management**
     - [x] NPM package structure
@@ -227,7 +227,7 @@ It includes planned features, improvements, and their current implementation sta
     - [ ] Chocolatey package (Windows)
     - [ ] Docker image
     - [ ] Standalone binary releases
-- **Cloud & Remote**
+- **Cloud and Remote**
     - [ ] Remote execution support
     - [ ] Multi-user deployments
     - [ ] Cloud provider integrations
@@ -238,12 +238,12 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Autonomous task execution
     - [x] Tool chaining
     - [x] File tracking for safe edits
-    - [x] AI SDK 5 Agent class for reusable configurations
+    - [ ] AI SDK 5 Agent class for reusable configurations
     - [x] Multi-step tool execution with automatic loop control
     - [x] Specialized agents with distinct personalities
-    - [x] onStepFinish callbacks for monitoring
-    - [x] prepareStep callbacks for dynamic configuration**
-    - [x] Multiple stopping conditions (step count, budget, errors, validation, completion)
+    - [ ] onStepFinish callbacks for monitoring
+    - [ ] prepareStep callbacks for dynamic configuration\*\*
+    - [ ] Multiple stopping conditions (step count, budget, errors, validation, completion)
     - [ ] Goal-oriented planning
     - [ ] Task decomposition
     - [ ] Long-term memory
@@ -255,14 +255,14 @@ It includes planned features, improvements, and their current implementation sta
     - [ ] Code review assistance
     - [ ] Pull request analysis
     - [ ] Multi-agent collaboration
-- **Extensions & Plugins**
+- **Extensions and Plugins**
     - [ ] Plugin system architecture
     - [ ] Custom tool registration
     - [ ] Language-specific plugins
     - [ ] Framework-specific assistants
     - [ ] Custom agent templates
 
-### 10. Security & Privacy
+### 10. Security and Privacy
 
 - **Security**
     - [x] API key environment variable support

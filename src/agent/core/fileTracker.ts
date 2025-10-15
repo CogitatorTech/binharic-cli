@@ -1,13 +1,13 @@
 import fs from "fs/promises";
 import path from "path";
 import logger from "@/logger.js";
-import { FileExistsError, FileOutdatedError, ToolError } from "./errors.js";
+import { FileExistsError, FileOutdatedError, ToolError } from "../errors/index.js";
 
 export { FileExistsError, FileOutdatedError };
 
 export class FileTracker {
-    private readTimestamps = new Map<string, number>();
     private static readonly MAX_TRACKED_FILES = 1000;
+    private readTimestamps = new Map<string, number>();
 
     async read(filePath: string): Promise<string> {
         const absolutePath = path.resolve(filePath);
@@ -40,48 +40,6 @@ export class FileTracker {
         if (this.readTimestamps.has(absolutePath)) this.readTimestamps.delete(absolutePath);
         this.readTimestamps.set(absolutePath, modified);
         logger.debug(`File write tracked: ${absolutePath} at ${modified}`);
-    }
-
-    private async validateFilePath(filePath: string, allowNew: boolean = false): Promise<void> {
-        try {
-            const stat = await fs.lstat(filePath);
-
-            if (stat.isSymbolicLink()) {
-                logger.warn(`Attempting to access symbolic link: ${filePath}`);
-                const realPath = await fs.realpath(filePath);
-                logger.info(`Symbolic link resolves to: ${realPath}`);
-            }
-
-            if (stat.isDirectory()) {
-                throw new ToolError(`Path is a directory, not a file: ${filePath}`);
-            }
-
-            if (!stat.isFile() && !stat.isSymbolicLink()) {
-                throw new ToolError(`Path is not a regular file: ${filePath}`);
-            }
-        } catch (error) {
-            if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-                if (!allowNew) {
-                    throw error;
-                }
-            } else if (error instanceof ToolError) {
-                throw error;
-            } else {
-                throw error;
-            }
-        }
-    }
-
-    private enforceLimit(): void {
-        while (this.readTimestamps.size >= FileTracker.MAX_TRACKED_FILES) {
-            const oldestKey = this.readTimestamps.keys().next().value as string | undefined;
-            if (oldestKey) {
-                this.readTimestamps.delete(oldestKey);
-                logger.debug(`Removed oldest tracked file: ${oldestKey}`);
-            } else {
-                break;
-            }
-        }
     }
 
     async assertCanCreate(filePath: string): Promise<void> {
@@ -139,11 +97,6 @@ export class FileTracker {
         }
     }
 
-    private async getModifiedTime(filePath: string): Promise<number> {
-        const stat = await fs.stat(filePath);
-        return stat.mtimeMs;
-    }
-
     clearTracking(): void {
         this.readTimestamps.clear();
         logger.debug("File tracking cleared");
@@ -155,6 +108,58 @@ export class FileTracker {
 
     getTrackedFileCount(): number {
         return this.readTimestamps.size;
+    }
+
+    isTracked(filePath: string): boolean {
+        const absolutePath = path.resolve(filePath);
+        return this.readTimestamps.has(absolutePath);
+    }
+
+    private async validateFilePath(filePath: string, allowNew: boolean = false): Promise<void> {
+        try {
+            const stat = await fs.lstat(filePath);
+
+            if (stat.isSymbolicLink()) {
+                logger.warn(`Attempting to access symbolic link: ${filePath}`);
+                const realPath = await fs.realpath(filePath);
+                logger.info(`Symbolic link resolves to: ${realPath}`);
+            }
+
+            if (stat.isDirectory()) {
+                throw new ToolError(`Path is a directory, not a file: ${filePath}`);
+            }
+
+            if (!stat.isFile() && !stat.isSymbolicLink()) {
+                throw new ToolError(`Path is not a regular file: ${filePath}`);
+            }
+        } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+                if (!allowNew) {
+                    throw error;
+                }
+            } else if (error instanceof ToolError) {
+                throw error;
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    private enforceLimit(): void {
+        while (this.readTimestamps.size >= FileTracker.MAX_TRACKED_FILES) {
+            const oldestKey = this.readTimestamps.keys().next().value as string | undefined;
+            if (oldestKey) {
+                this.readTimestamps.delete(oldestKey);
+                logger.debug(`Removed oldest tracked file: ${oldestKey}`);
+            } else {
+                break;
+            }
+        }
+    }
+
+    private async getModifiedTime(filePath: string): Promise<number> {
+        const stat = await fs.stat(filePath);
+        return stat.mtimeMs;
     }
 }
 

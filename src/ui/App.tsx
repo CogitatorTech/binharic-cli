@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import { Box, useInput } from "ink";
-import { useStore } from "@/agent/state.js";
+import { Box, useApp, useInput } from "ink";
+import { useStore } from "@/agent/core/state.js";
 import { useShallow } from "zustand/react/shallow";
 import { History } from "./History.js";
 import { UserInput } from "./UserInput.js";
@@ -11,7 +11,13 @@ import { ContextSummaryDisplay } from "./ContextSummaryDisplay.js";
 import { ToolConfirmation } from "./ToolConfirmation.js";
 import { CheckpointConfirmation } from "./CheckpointConfirmation.js";
 
+declare global {
+    // augment global object with optional exit callback holder
+    var __binharic_exit_callback: (() => void) | undefined;
+}
+
 export default function App() {
+    const { exit } = useApp();
     const { loadInitialConfig, helpMenuOpen, status, clearError } = useStore(
         useShallow((s) => ({
             loadInitialConfig: s.actions.loadInitialConfig,
@@ -23,7 +29,14 @@ export default function App() {
 
     useEffect(() => {
         loadInitialConfig();
-    }, [loadInitialConfig]);
+
+        const g = globalThis as typeof globalThis & {
+            __binharic_exit_callback?: () => void;
+        };
+        if (typeof g.__binharic_exit_callback === "undefined") {
+            g.__binharic_exit_callback = exit;
+        }
+    }, [loadInitialConfig, exit]);
 
     useInput(() => {
         if (status === "error") {
@@ -40,8 +53,6 @@ export default function App() {
             <Box flexDirection="column" paddingX={1}>
                 {helpMenuOpen && <HelpMenu />}
                 <ContextSummaryDisplay />
-
-                {/* Conditionally render UserInput, ToolConfirmation, or CheckpointConfirmation */}
                 {status === "checkpoint-request" ? (
                     <CheckpointConfirmation />
                 ) : status === "tool-request" ? (
@@ -49,7 +60,6 @@ export default function App() {
                 ) : (
                     <UserInput />
                 )}
-
                 <Footer />
             </Box>
         </Box>

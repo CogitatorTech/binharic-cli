@@ -1,4 +1,4 @@
-import { fileTracker } from "./fileTracker.js";
+import { fileTracker } from "../core/fileTracker.js";
 import logger from "@/logger.js";
 import path from "path";
 import fs from "fs/promises";

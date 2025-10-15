@@ -4,6 +4,7 @@ import type { ModelConfig } from "@/config.js";
 import logger from "@/logger.js";
 
 function getTokenCount(text: string): number {
+    if (text.length >= 12000) return Math.ceil(text.length * 0.4);
     return encode(text).length;
 }
 
@@ -31,24 +32,29 @@ function getMessageTokenCount(message: ModelMessage): number {
                 tokens += getTokenCount(part.text);
             } else if ("output" in part && part.output) {
                 if (typeof part.output === "object" && "value" in part.output) {
-                    tokens += getTokenCount(serializeContent(part.output.value));
+                    tokens += getTokenCount(serializeContent((part.output as any).value));
                 } else {
-                    tokens += getTokenCount(serializeContent(part.output));
+                    tokens += getTokenCount(serializeContent((part as any).output));
                 }
-            } else if ("toolName" in part && typeof part.toolName === "string") {
-                tokens += getTokenCount(part.toolName);
-                if ("args" in part && part.args) {
-                    tokens += getTokenCount(serializeContent(part.args));
+            } else if ("toolName" in part && typeof (part as any).toolName === "string") {
+                tokens += getTokenCount((part as any).toolName as string);
+                tokens += 10;
+                if ("args" in part && (part as any).args) {
+                    tokens += getTokenCount(serializeContent((part as any).args));
                 }
             } else {
-                tokens += getTokenCount(serializeContent(part));
+                tokens += getTokenCount(serializeContent(part as any));
             }
         }
     } else {
-        tokens += getTokenCount(serializeContent(message.content));
+        tokens += getTokenCount(serializeContent(message.content as any));
     }
 
     tokens += 4;
+
+    if (message.role === "tool") {
+        tokens += 15;
+    }
 
     return tokens;
 }

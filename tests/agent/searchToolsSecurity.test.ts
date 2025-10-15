@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("Search Tools - Command Injection and Timeout", () => {
     it("should sanitize search queries", () => {

@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { tool } from "ai";
 import { spawn } from "child_process";
-import { ToolError } from "../../errors.js";
+import { ToolError } from "../../errors/index.js";
 
 export const grepSearchTool = tool({
     description: "Search for text patterns in workspace files using grep.",

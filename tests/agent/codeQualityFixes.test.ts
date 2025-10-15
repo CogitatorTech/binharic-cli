@@ -1,10 +1,10 @@
-import { describe, it, expect } from "vitest";
-import { checkProviderAvailability } from "@/agent/llm.js";
+import { describe, expect, it } from "vitest";
+import { checkProviderAvailability } from "@/agent/llm/provider.js";
 import {
-    createTokenBudgetManager,
-    createContextManager,
     combinePrepareSteps,
-} from "@/agent/prepareStep.js";
+    createContextManager,
+    createTokenBudgetManager,
+} from "@/agent/execution/prepareStep.js";
 import type { Config } from "@/config.js";
 
 describe("Code Quality Fixes", () => {
@@ -168,7 +168,7 @@ describe("Code Quality Fixes", () => {
 
     describe("module exports", () => {
         it("should export only necessary functions from prepareStep", async () => {
-            const module = await import("@/agent/prepareStep.js");
+            const module = await import("@/agent/execution/prepareStep.js");
 
             expect(module.createContextManager).toBeDefined();
             expect(module.createToolResultSummarizer).toBeDefined();
@@ -181,7 +181,7 @@ describe("Code Quality Fixes", () => {
         });
 
         it("should not export internal registry functions from llm", async () => {
-            const module = await import("@/agent/llm.js");
+            const module = await import("@/agent/llm/provider.js");
 
             expect(module.checkProviderAvailability).toBeDefined();
             expect(module.createLlmProvider).toBeDefined();
@@ -194,7 +194,7 @@ describe("Code Quality Fixes", () => {
 
     describe("import paths", () => {
         it("should import tools from correct path", async () => {
-            const agentsModule = await import("@/agent/agents.js");
+            const agentsModule = await import("@/agent/core/agents.js");
             const toolsModule = await import("@/agent/tools/index.js");
 
             expect(agentsModule.createBinharicAgent).toBeDefined();

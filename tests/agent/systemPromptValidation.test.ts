@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { generateSystemPrompt } from "@/agent/systemPrompt.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { generateSystemPrompt } from "@/agent/core/systemPrompt.js";
 import type { Config } from "@/config.js";
 import fs from "fs/promises";
 

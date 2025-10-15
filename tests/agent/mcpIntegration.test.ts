@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("MCP Integration - Connection and Error Handling", () => {
     it("should validate MCP server configuration", () => {
@@ -68,7 +68,6 @@ describe("MCP Integration - Connection and Error Handling", () => {
         expect(transportClosed).toBe(true);
     });
 });
-import { describe, it, expect } from "vitest";
 
 describe("Validation System - Ground Truth Feedback", () => {
     it("should validate file edit operations", async () => {

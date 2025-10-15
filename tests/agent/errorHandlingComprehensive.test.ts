@@ -1,4 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import { applyContextWindow } from "@/agent/context/contextWindow.js";
+import type { ModelMessage } from "ai";
+import type { ModelConfig } from "@/config.js";
 
 describe("Error Handling - Comprehensive Coverage", () => {
     it("should categorize errors correctly", () => {
@@ -101,10 +104,6 @@ describe("Error Handling - Comprehensive Coverage", () => {
         expect(error.message).toContain("/path/to/file.txt");
     });
 });
-import { describe, it, expect, vi } from "vitest";
-import { applyContextWindow } from "@/agent/contextWindow.js";
-import type { ModelMessage } from "ai";
-import type { ModelConfig } from "@/config.js";
 
 describe("Context Window Management - Edge Cases", () => {
     const mockModelConfig: ModelConfig = {

@@ -1,9 +1,6 @@
-// src/ui/ToolConfirmation.tsx
-// CORRECTED: Fixed an invalid prop on the Text component.
-
 import React from "react";
 import { Box, Text, useInput } from "ink";
-import { useStore } from "@/agent/state.js";
+import { useStore } from "@/agent/core/state.js";
 import { useShallow } from "zustand/react/shallow";
 
 export function ToolConfirmation() {
@@ -34,7 +31,7 @@ export function ToolConfirmation() {
             marginTop={1}
         >
             <Text bold>
-                ⚙️ The Tech-Priest seeks authorization to perform the following sacred rites:
+                The Tech-Priest seeks authorization to perform the following sacred rites:
             </Text>
             {pendingToolRequest.calls.map((call) => {
                 const args = (call as any).args || (call as any).input || {};

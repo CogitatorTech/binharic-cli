@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-    gitStatusTool,
+    gitAddTool,
+    gitBranchCreateTool,
+    gitBranchCurrentTool,
+    gitBranchListTool,
+    gitBranchSwitchTool,
+    gitCommitTool,
     gitDiffTool,
     gitLogTool,
-    gitAddTool,
-    gitCommitTool,
-    gitBranchListTool,
-    gitBranchCurrentTool,
-    gitBranchCreateTool,
-    gitBranchSwitchTool,
+    gitStatusTool,
 } from "@/agent/tools/definitions/git.js";
 import simpleGit from "simple-git";
 
@@ -130,7 +130,7 @@ describe("Git Tools - Sacred Repository Operations", () => {
                         author_name: "Tech-Priest",
                         author_email: "priest@omnissiah.tech",
                         date: "2025-10-14T12:00:00Z",
-                        message: "Fix bug in machine spirit",
+                        message: "Fix bug in the Machine Spirit",
                     },
                 ],
             });

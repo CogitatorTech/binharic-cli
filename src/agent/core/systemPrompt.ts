@@ -1,5 +1,5 @@
 import { type Config } from "@/config.js";
-import { tools } from "./tools/definitions/index.js";
+import { tools } from "../tools/definitions/index.js";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";

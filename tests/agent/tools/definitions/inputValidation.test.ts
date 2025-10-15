@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runTool } from "@/agent/tools/index.js";
-import { loadConfig } from "@/config.js";
 import type { Config } from "@/config.js";
+import { loadConfig } from "@/config.js";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { tool } from "ai";
-import { fileTracker } from "../../fileTracker.js";
-import { ToolError } from "@/agent/errors.js";
+import { fileTracker } from "../../core/fileTracker.js";
+import { ToolError } from "@/agent/errors/index.js";
 
 export const readFileTool = tool({
     description: `Read the content of a file. The Machine Spirit reveals the sacred text.

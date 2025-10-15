@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useStore } from "@/agent/state";
-import { FatalError, TransientError } from "@/agent/errors";
+import { useStore } from "@/agent/core/state";
+import { FatalError, TransientError } from "@/agent/errors/index";
 
-// Mock dependencies
-vi.mock("@/agent/llm");
+vi.mock("@/agent/llm/provider.js", () => ({
+    streamAssistantResponse: vi.fn(),
+    checkProviderAvailability: vi.fn().mockResolvedValue({
+        available: true,
+        availableProviders: ["ollama"],
+        unavailableProviders: [],
+    }),
+}));
+
 vi.mock("@/agent/tools");
-vi.mock("@/agent/system-prompt", () => ({
+vi.mock("@/agent/core/systemPrompt.js", () => ({
     generateSystemPrompt: vi.fn().mockResolvedValue("mocked system prompt"),
 }));
 vi.mock("@/config", () => ({
@@ -22,7 +29,6 @@ vi.mock("simple-git");
 describe("Agent State Machine", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        // Reset the store before each test
         useStore.setState({
             history: [],
             commandHistory: [],
@@ -39,11 +45,13 @@ describe("Agent State Machine", () => {
             helpMenuOpen: false,
             branchName: "test-branch",
             pendingToolRequest: null,
+            pendingCheckpoint: null,
+            contextFiles: [],
         });
     });
 
     it("should transition to error state on FatalError", async () => {
-        const { streamAssistantResponse } = await import("@/agent/llm");
+        const { streamAssistantResponse } = await import("@/agent/llm/provider.js");
         vi.mocked(streamAssistantResponse).mockRejectedValue(new FatalError("Fatal error"));
 
         await useStore.getState().actions._runAgentLogic();
@@ -54,7 +62,7 @@ describe("Agent State Machine", () => {
     });
 
     it("should transition to error state on any other error", async () => {
-        const { streamAssistantResponse } = await import("@/agent/llm");
+        const { streamAssistantResponse } = await import("@/agent/llm/provider.js");
         vi.mocked(streamAssistantResponse).mockRejectedValue(new Error("Some other error"));
 
         await useStore.getState().actions._runAgentLogic();
@@ -78,11 +86,11 @@ describe("Agent State Machine", () => {
         await useStore.getState().actions.startAgent("test input");
 
         const state = useStore.getState();
-        expect(state.status).toBe("error"); // Should remain in error state
+        expect(state.status).toBe("error");
     });
 
     it("should retry on TransientError", async () => {
-        const { streamAssistantResponse } = await import("@/agent/llm");
+        const { streamAssistantResponse } = await import("@/agent/llm/provider.js");
         vi.mocked(streamAssistantResponse)
             .mockRejectedValueOnce(new TransientError("Rate limit"))
             .mockResolvedValueOnce({
@@ -95,11 +103,10 @@ describe("Agent State Machine", () => {
         const { actions } = useStore.getState();
         actions.startAgent("test");
 
-        // Wait for initial call + backoff delay (1000ms) + retry call
         await new Promise((resolve) => setTimeout(resolve, 1500));
 
         const state = useStore.getState();
         expect(state.status).toBe("idle");
         expect(streamAssistantResponse).toHaveBeenCalledTimes(2);
-    }, 3000); // Increase timeout for this test
+    }, 3000);
 });

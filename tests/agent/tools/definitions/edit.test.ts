@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import editTool from "../../../../src/agent/tools/definitions/edit";
-import { fileTracker } from "../../../../src/agent/fileTracker";
-import { autofixEdit } from "../../../../src/agent/autofix";
+import { fileTracker } from "../../../../src/agent/core/fileTracker";
+import { autofixEdit } from "../../../../src/agent/workflows/autofix";
 import { ToolError } from "../../../../src/agent/errors";
 
-vi.mock("../../../../src/agent/fileTracker");
-vi.mock("../../../../src/agent/autofix");
+vi.mock("../../../../src/agent/core/fileTracker");
+vi.mock("../../../../src/agent/workflows/autofix");
 
 describe("edit tool", () => {
     const mockRead = vi.mocked(fileTracker.read);

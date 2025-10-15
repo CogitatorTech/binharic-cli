@@ -1,12 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createBinharicAgent, createAgentByType } from "../../src/agent/agents";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createAgentByType, createBinharicAgent } from "../../src/agent/core/agents";
 import type { Config } from "../../src/config";
 
-vi.mock("../../src/agent/llm", () => ({
-    createLlmProvider: vi.fn(() => "mocked-llm-provider"),
+vi.mock("../../src/agent/llm/provider.js", () => ({
+    createLlmProvider: vi.fn(() => ({
+        provider: "openai",
+        modelId: "gpt-4o",
+    })),
+    checkProviderAvailability: vi.fn(async () => ({
+        available: true,
+        availableProviders: ["openai"],
+        unavailableProviders: [],
+    })),
 }));
 
-vi.mock("../../src/agent/systemPrompt", () => ({
+vi.mock("../../src/agent/core/systemPrompt.js", () => ({
     generateSystemPrompt: vi.fn(async () => "Test system prompt"),
 }));
 
@@ -14,6 +22,7 @@ describe("Agent Factories", () => {
     let mockConfig: Config;
 
     beforeEach(() => {
+        vi.clearAllMocks();
         mockConfig = {
             userName: "testuser",
             systemPrompt: "You are a test agent",

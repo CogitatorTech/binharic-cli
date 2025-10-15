@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
     createModelRegistry,
+    getAvailableModels,
     getModelFromRegistry,
     parseModelString,
-    getAvailableModels,
     validateModelString,
-} from "@/agent/modelRegistry.js";
+} from "@/agent/llm/modelRegistry.js";
 import type { Config } from "@/config.js";
 
 describe("Model Registry Module", () => {

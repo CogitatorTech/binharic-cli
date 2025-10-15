@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { tool } from "ai";
-import { executeWorkflow } from "@/agent/workflows.js";
+import { executeWorkflow } from "@/agent/workflows/executor.js";
 import type { Config } from "@/config.js";
-import { ToolError } from "@/agent/errors.js";
+import { ToolError } from "@/agent/errors/index.js";
 import logger from "@/logger.js";
 
 export function createWorkflowTool(config: Config) {

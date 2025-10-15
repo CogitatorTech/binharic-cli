@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { tool } from "ai";
 import { compile } from "html-to-text";
-import { ToolError } from "../../errors.js";
+import { ToolError } from "../../errors/index.js";
 
 const converter = compile({ wordwrap: 130 });
 

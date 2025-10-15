@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { tool } from "ai";
 import { spawn } from "child_process";
-import { ToolError } from "../../errors.js";
+import { ToolError } from "../../errors/index.js";
 import fs from "fs/promises";
 import path from "path";
 

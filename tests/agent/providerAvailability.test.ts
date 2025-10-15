@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { checkProviderAvailability } from "../../src/agent/llm.js";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { checkProviderAvailability } from "../../src/agent/llm/provider.js";
 import type { Config } from "../../src/config.js";
 
 describe("Provider Availability Check", () => {

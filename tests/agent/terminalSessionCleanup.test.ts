@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runTool } from "@/agent/tools/index.js";
-import { loadConfig } from "@/config.js";
 import type { Config } from "@/config.js";
+import { loadConfig } from "@/config.js";
 
 describe("Terminal Session Cleanup", () => {
     let config: Config;

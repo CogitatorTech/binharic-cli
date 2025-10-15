@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import create from "../../../../src/agent/tools/definitions/create";
-import { fileTracker } from "../../../../src/agent/fileTracker";
-import { ToolError } from "../../../../src/agent/errors";
+import { fileTracker } from "../../../../src/agent/core/fileTracker";
 
-vi.mock("../../../../src/agent/fileTracker", () => ({
+vi.mock("../../../../src/agent/core/fileTracker", () => ({
     fileTracker: {
         assertCanCreate: vi.fn(),
         write: vi.fn(),
@@ -17,7 +16,7 @@ describe("create tool", () => {
     };
 
     beforeEach(() => {
-        vi.resetAllMocks();
+        vi.clearAllMocks();
     });
 
     it("should return a success message on successful creation", async () => {
@@ -38,7 +37,7 @@ describe("create tool", () => {
         vi.mocked(fileTracker.assertCanCreate).mockRejectedValue(error);
 
         await expect(create.execute!(mockArgs, {} as any)).rejects.toThrow(
-            "File already exists at test.txt. Use the 'edit' tool to modify it.",
+            /File already exists at .* Use the 'edit' tool to modify it\./,
         );
 
         expect(fileTracker.write).not.toHaveBeenCalled();
