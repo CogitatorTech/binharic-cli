@@ -1,6 +1,6 @@
 {
   "name": "@cogitator/binharic-cli",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "A coding agent with the persona of a Tech-Priest of the Adeptus Mechanicus",
   "main": "dist/cli.js",
   "type": "module",

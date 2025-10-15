@@ -23,8 +23,9 @@ Binharic is a terminal-based AI coding assistant (a coding agent) similar to Ope
 Anthropic's Claude Code—but with the personality of a devout Tech-Priest of the Adeptus Mechanicus.
 Binharic is written in TypeScript and uses the [AI SDK](https://ai-sdk.dev/) framework for most of its underlying
 agentic logic (like tool calling and workflow management).
-Moreover, its architecture follows the recommendations mentioned in the
-[building effective agents](https://www.anthropic.com/engineering/building-effective-agents) from Anthropic.
+Additionally, its architecture follows the recommendations mentioned in the
+[building effective agents](https://www.anthropic.com/engineering/building-effective-agents) article from Anthropic,
+to a good degree.
 
 Binharic's development started as a personal project to learn more about building a terminal-based coding agent.
 However, the project has grown somewhat into a full-fledged coding assistant with a lot of features
@@ -33,7 +34,7 @@ like the ability to analyze projects, run tests, find bugs, and perform code rev
 ### Features
 
 - Can use models from OpenAI, Google, Anthropic, and Ollama
-- Is fully customizable (like customizing system prompt, models, etc.)
+- Is fully customizable (like customizing system prompt)
 - Comes with a built-in retrieval-augmented generation (RAG) pipeline
 - Comes with a large set of built-in tools (like reading and writing files); can use external tools via MCP
 - Comes with built-in workflows for standard software development tasks (like debugging and code review)
@@ -48,7 +49,33 @@ See the [ROADMAP.md](ROADMAP.md) for the list of implemented and planned feature
 
 ### Getting Started
 
-To be added.
+You can follow the instructions below to install and use Binharic in your terminal.
+
+#### Installation
+
+```sh
+npm install -g @cogitator/binharic-cli
+```
+
+#### Usage
+
+```sh
+# Make sure API keys are available in the environment
+export OPENAI_API_KEY=<your-openai-api-key>
+export ANTHROPIC_API_KEY=<your-anthropic-api-key>
+export GOOGLE_API_KEY=<your-google-api-key>
+
+# Start Binharic in the terminal
+binharic
+```
+
+[![asciicast](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C.svg)](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C)
+
+---
+
+#### Documentation
+
+See the [docs](docs) for more information on how to use Binharic coding agent.
 
 ---
 
