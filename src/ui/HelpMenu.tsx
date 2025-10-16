@@ -243,7 +243,7 @@ export function HelpMenu() {
 
             <Box marginTop={1} justifyContent="center">
                 <Text color={theme.dim} dimColor>
-                    Tip: Create BINHARIC.md files to customize interactions with the agent
+                    Tip: Create a BINHARIC.md file to customize interactions with the agent
                 </Text>
             </Box>
         </Box>

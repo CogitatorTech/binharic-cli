@@ -35,7 +35,7 @@ like the ability to analyze projects, run tests, find bugs, and perform code rev
 
 - Can use models from OpenAI, Google, Anthropic, and Ollama
 - Is fully customizable (like customizing system prompt)
-- Comes with a built-in retrieval-augmented generation (RAG) pipeline
+- Comes with a built-in keyword-based retrieval-augmented generation (RAG) pipeline
 - Comes with a large set of built-in tools (like reading and writing files)
 - Can use external tools via the Model Context Protocol (MCP)
 - Comes with built-in workflows for standard software development tasks (like debugging and code review)
@@ -82,10 +82,9 @@ binharic
 Alternatively, you can run Binharic in a container:
 
 ```sh
-# API keys should be available in the environment already
+# API keys and PWD should be available in the environment already
 docker run -it --rm \
   -v $(PWD):/workspace \
-  -w /workspace \
   -e OPENAI_API_KEY \
   -e ANTHROPIC_API_KEY \
   -e GOOGLE_API_KEY \

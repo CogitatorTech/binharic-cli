@@ -11,7 +11,7 @@ describe("Header", () => {
         expect(lastFrame()).toContain("1. Ask questions, edit files, or run commands.");
         expect(lastFrame()).toContain("2. Be specific for the best results.");
         expect(lastFrame()).toContain(
-            "3. Create BINHARIC.md files to customize your interactions with Binharic.",
+            "3. Create a BINHARIC.md file to customize your interactions with Binharic.",
         );
         expect(lastFrame()).toContain("4. /help for more information.");
     });
