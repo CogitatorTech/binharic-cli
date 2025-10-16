@@ -274,7 +274,7 @@ export function UserInput() {
                                 providers.get(model.provider)!.push(model);
                             });
 
-                            let output = "\n Available Models \n";
+                            let output = "\nAvailable Models\n";
 
                             providers.forEach((models, provider) => {
                                 const providerName =
