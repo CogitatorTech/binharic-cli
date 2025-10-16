@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
+import { theme } from "./theme.js";
 
 export interface CommandSuggestion {
     command: string;
@@ -27,7 +28,7 @@ export function CommandAutocomplete({
         <Box
             flexDirection="column"
             borderStyle="round"
-            borderColor="cyan"
+            borderColor={theme.primary}
             paddingX={1}
             marginBottom={1}
         >
@@ -37,7 +38,7 @@ export function CommandAutocomplete({
                     <Box key={suggestion.command} flexDirection="row">
                         <Box width={20}>
                             <Text
-                                color={isSelected ? "cyan" : "white"}
+                                color={isSelected ? theme.primary : theme.text}
                                 bold={isSelected}
                                 inverse={isSelected}
                             >
@@ -46,7 +47,7 @@ export function CommandAutocomplete({
                             </Text>
                         </Box>
                         <Box flexGrow={1} marginLeft={2}>
-                            <Text color="gray" dimColor={!isSelected}>
+                            <Text color={theme.dim} dimColor={!isSelected}>
                                 {suggestion.description}
                             </Text>
                         </Box>
@@ -55,13 +56,13 @@ export function CommandAutocomplete({
             })}
             {hasMore && (
                 <Box justifyContent="center" marginTop={1}>
-                    <Text color="gray" dimColor>
+                    <Text color={theme.dim} dimColor>
                         ▼ ({suggestions.length - maxVisible} more - keep typing to filter)
                     </Text>
                 </Box>
             )}
-            <Box justifyContent="center" marginTop={1} borderTop borderColor="gray">
-                <Text color="gray" dimColor>
+            <Box justifyContent="center" marginTop={1} borderTop borderColor={theme.border}>
+                <Text color={theme.dim} dimColor>
                     ({selectedIndex + 1}/{suggestions.length}) ↑↓ to navigate, Enter to select, Esc
                     to cancel
                 </Text>

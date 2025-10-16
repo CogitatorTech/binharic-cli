@@ -31,6 +31,10 @@ Binharic's development started as a personal project to learn more about buildin
 However, the project has grown somewhat into a full-fledged coding assistant with a lot of features
 like the ability to analyze projects, run tests, find bugs, and perform code review.
 
+The diagram below shows a high-level overview of the Binharic agentic workflow.
+
+![Agentic Workflow](docs/assets/diagrams/agentic_workflow_v0.2.0.svg)
+
 ### Features
 
 - Can use models from OpenAI, Google, Anthropic, and Ollama

@@ -1,5 +1,6 @@
 import React from "react";
 import { Text } from "ink";
+import { theme } from "./theme.js";
 
 interface HighlightedInputProps {
     value: string;
@@ -49,17 +50,17 @@ export function HighlightedInput({ value, placeholder }: HighlightedInputProps) 
         const rest = value.slice(matchingCommand.length);
         return (
             <Text>
-                <Text color="cyan" bold>
+                <Text color={theme.primary} bold>
                     {matchingCommand}
                 </Text>
                 {rest}
             </Text>
         );
     } else if (isPartialMatch) {
-        // Partial match - highlight in yellow
+        // Partial match - highlight in warning color
         return (
             <Text>
-                <Text color="yellow">{potentialCommand}</Text>
+                <Text color={theme.warning}>{potentialCommand}</Text>
                 {value.slice(potentialCommand.length)}
             </Text>
         );

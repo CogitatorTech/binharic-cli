@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
+import { theme } from "./theme.js";
 
 export interface TodoItem {
     id: string;
@@ -50,13 +51,13 @@ export const TodoList: React.FC<TodoListProps> = ({
     const getStatusColor = (status: TodoItem["status"]) => {
         switch (status) {
             case "pending":
-                return "gray";
+                return theme.dim;
             case "in-progress":
-                return "cyan";
+                return theme.primary;
             case "completed":
-                return "green";
+                return theme.success;
             case "failed":
-                return "red";
+                return theme.error;
         }
     };
 
@@ -70,7 +71,7 @@ export const TodoList: React.FC<TodoListProps> = ({
                 {displayTodos.map((todo) => (
                     <Box key={todo.id} marginLeft={1}>
                         {todo.status === "in-progress" && (
-                            <Text color="cyan">
+                            <Text color={theme.primary}>
                                 <Spinner type="dots" />
                             </Text>
                         )}
@@ -90,7 +91,7 @@ export const TodoList: React.FC<TodoListProps> = ({
     }
 
     return (
-        <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1} marginY={1}>
+        <Box flexDirection="column" borderStyle="round" borderColor={theme.border} paddingX={1} marginY={1}>
             <Text bold>
                 Progress: {completedCount}/{totalCount}
             </Text>
@@ -98,7 +99,7 @@ export const TodoList: React.FC<TodoListProps> = ({
                 {displayTodos.map((todo) => (
                     <Box key={todo.id}>
                         {todo.status === "in-progress" && (
-                            <Text color="cyan">
+                            <Text color={theme.primary}>
                                 <Spinner type="dots" />
                             </Text>
                         )}

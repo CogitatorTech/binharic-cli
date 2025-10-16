@@ -1,0 +1,79 @@
+digraph AgenticWorkflow {
+    // --- Graph Settings (Updated Style) ---
+    graph [
+rankdir=LR,
+label="AI Agentic Workflow",
+fontsize=22,
+fontname="Helvetica-Bold,Arial-Bold,sans-serif",
+fontcolor="#333333",
+labelloc=t,
+compound=true,
+bgcolor="#F8F9FA",
+splines=ortho,
+nodesep=0.6,
+ranksep=1.2
+];
+
+// --- Default Node & Edge Styles (from example) ---
+    node [
+fontname="Helvetica,Arial,sans-serif",
+shape=box,
+style="filled,rounded",
+color="lightblue", // Border color
+        fillcolor="white",   // Default fill color
+        penwidth=2
+];
+edge [
+fontname="Helvetica,Arial,sans-serif",
+color="black",
+arrowhead=vee,
+fontsize=10
+];
+
+// --- Node Definitions (with new colors) ---
+    Start [
+shape=circle,
+label="Start",
+fontname="Helvetica-Bold,Arial-Bold,sans-serif"
+];
+End [
+shape=doublecircle,
+label="End",
+fontname="Helvetica-Bold,Arial-Bold,sans-serif"
+];
+
+HumanLoop [
+label="User Feedback",
+fillcolor="lightgreen"
+];
+AIModel [
+label="AI Model",
+fillcolor="lightpink"
+];
+
+// --- Agentic Loop Cluster (styled like example) ---
+    subgraph cluster_agentic_loop {
+label = "Agentic Loop";
+style = "dashed";
+color = "lightgrey";
+fontname="Helvetica-Bold,Arial-Bold,sans-serif";
+
+// Nodes inside the cluster get a yellow fill
+        node [fillcolor="lightyellow"];
+
+Plan;
+Execute;
+Check;
+
+Plan -> Execute -> Check;
+}
+
+// --- Layout and Workflow Connections ---
+    HumanLoop -> Execute -> AIModel [style=invis, minlen=1];
+
+Start -> Plan [lhead=cluster_agentic_loop];
+Check -> End [ltail=cluster_agentic_loop];
+
+HumanLoop -> Plan [lhead=cluster_agentic_loop, constraint=false, xlabel="  Feedback  "];
+Execute -> AIModel [ltail=cluster_agentic_loop, constraint=false, xlabel="Uses  "];
+}

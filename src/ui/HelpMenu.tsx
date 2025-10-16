@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { tools } from "../agent/tools/definitions/index.js";
+import { theme } from "./theme.js";
 
 const staticCommands = [
     {
@@ -33,13 +34,13 @@ export function HelpMenu() {
         <Box
             flexDirection="column"
             borderStyle="round"
-            borderColor="cyan"
+            borderColor={theme.primary}
             paddingX={2}
             paddingY={1}
             marginBottom={1}
         >
             <Box flexDirection="column" marginBottom={1}>
-                <Text bold color="cyan">
+                <Text bold color={theme.primary}>
                     Basics:
                 </Text>
                 <Text>
@@ -52,159 +53,159 @@ export function HelpMenu() {
             </Box>
 
             <Box flexDirection="column" marginBottom={1}>
-                <Text bold color="cyan">
+                <Text bold color={theme.primary}>
                     Commands:
                 </Text>
                 <Box flexDirection="column" paddingLeft={1}>
                     <Text>
-                        <Text color="yellow">/help</Text> - Show this help message
+                        <Text color={theme.warning}>/help</Text> - Show this help message
                     </Text>
                     <Text>
-                        <Text color="yellow">/clear</Text> - Clear the screen and conversation
+                        <Text color={theme.warning}>/clear</Text> - Clear the screen and conversation
                         history
                     </Text>
                     <Text>
-                        <Text color="yellow">/clearHistory</Text> - Clear command history
+                        <Text color={theme.warning}>/clearHistory</Text> - Clear command history
                     </Text>
                     <Text>
-                        <Text color="yellow">/quit</Text> or <Text color="yellow">/exit</Text> -
+                        <Text color={theme.warning}>/quit</Text> or <Text color={theme.warning}>/exit</Text> -
                         Exit the application
                     </Text>
                     <Text>
-                        <Text color="yellow">/model</Text> - Switch to a different model (e.g.,
+                        <Text color={theme.warning}>/model</Text> - Switch to a different model (e.g.,
                         /model gpt-5-mini)
                     </Text>
                     <Text>
-                        <Text color="yellow">/system</Text> - Set custom system prompt
+                        <Text color={theme.warning}>/system</Text> - Set custom system prompt
                     </Text>
                     <Text>
-                        <Text color="yellow">/add</Text> - Add context files (e.g., /add README.md
+                        <Text color={theme.warning}>/add</Text> - Add context files (e.g., /add README.md
                         config.json)
                     </Text>
                     <Text>
-                        <Text color="yellow">/models</Text> - List all available model providers and
+                        <Text color={theme.warning}>/models</Text> - List all available model providers and
                         models
                     </Text>
                 </Box>
             </Box>
 
             <Box flexDirection="column" marginBottom={1}>
-                <Text bold color="cyan">
+                <Text bold color={theme.primary}>
                     File Tools (prefix with / to execute directly):
                 </Text>
                 <Box flexDirection="column" paddingLeft={1}>
                     <Text>
-                        <Text color="green">read_file</Text> - Read a file from the filesystem
+                        <Text color={theme.success}>read_file</Text> - Read a file from the filesystem
                     </Text>
                     <Text>
-                        <Text color="green">read_multiple_files</Text> - Read multiple files at once
+                        <Text color={theme.success}>read_multiple_files</Text> - Read multiple files at once
                         (batch)
                     </Text>
                     <Text>
-                        <Text color="green">list</Text> - List files and directories
+                        <Text color={theme.success}>list</Text> - List files and directories
                     </Text>
                     <Text>
-                        <Text color="green">search</Text> - Search for files by name pattern
+                        <Text color={theme.success}>search</Text> - Search for files by name pattern
                     </Text>
                     <Text>
-                        <Text color="green">grep_search</Text> - Search for text within files
+                        <Text color={theme.success}>grep_search</Text> - Search for text within files
                     </Text>
                     <Text>
-                        <Text color="green">create</Text> - Create a new file
+                        <Text color={theme.success}>create</Text> - Create a new file
                     </Text>
                     <Text>
-                        <Text color="green">edit</Text> - Edit an existing file
+                        <Text color={theme.success}>edit</Text> - Edit an existing file
                     </Text>
                     <Text>
-                        <Text color="green">insert_edit_into_file</Text> - Apply smart edits to a
+                        <Text color={theme.success}>insert_edit_into_file</Text> - Apply smart edits to a
                         file
                     </Text>
                     <Text>
-                        <Text color="green">get_errors</Text> - Get compilation or lint errors
+                        <Text color={theme.success}>get_errors</Text> - Get compilation or lint errors
                     </Text>
                     <Text>
-                        <Text color="green">validate</Text> - Validate file operations or changes
+                        <Text color={theme.success}>validate</Text> - Validate file operations or changes
                     </Text>
                 </Box>
             </Box>
 
             <Box flexDirection="column" marginBottom={1}>
-                <Text bold color="cyan">
+                <Text bold color={theme.primary}>
                     Execution Tools:
                 </Text>
                 <Box flexDirection="column" paddingLeft={1}>
                     <Text>
-                        <Text color="blue">bash</Text> - Execute a bash command
+                        <Text color={theme.info}>bash</Text> - Execute a bash command
                     </Text>
                     <Text>
-                        <Text color="blue">run_in_terminal</Text> - Run command in persistent
+                        <Text color={theme.info}>run_in_terminal</Text> - Run command in persistent
                         terminal
                     </Text>
                     <Text>
-                        <Text color="blue">get_terminal_output</Text> - Get output from terminal
+                        <Text color={theme.info}>get_terminal_output</Text> - Get output from terminal
                         session
                     </Text>
                     <Text>
-                        <Text color="blue">fetch</Text> - Fetch content from a URL
+                        <Text color={theme.info}>fetch</Text> - Fetch content from a URL
                     </Text>
                     <Text>
-                        <Text color="blue">mcp</Text> - Execute Model Context Protocol server
+                        <Text color={theme.info}>mcp</Text> - Execute Model Context Protocol server
                         commands
                     </Text>
                 </Box>
             </Box>
 
             <Box flexDirection="column" marginBottom={1}>
-                <Text bold color="cyan">
+                <Text bold color={theme.primary}>
                     Git Tools:
                 </Text>
                 <Box flexDirection="column" paddingLeft={1}>
                     <Text>
-                        <Text color="magenta">git_status</Text> - Show repository status
+                        <Text color={theme.accent}>git_status</Text> - Show repository status
                     </Text>
                     <Text>
-                        <Text color="magenta">git_log</Text> - Show commit history
+                        <Text color={theme.accent}>git_log</Text> - Show commit history
                     </Text>
                     <Text>
-                        <Text color="magenta">git_diff</Text> - Show diff of changes
+                        <Text color={theme.accent}>git_diff</Text> - Show diff of changes
                     </Text>
                     <Text>
-                        <Text color="magenta">git_add</Text> - Stage files for commit
+                        <Text color={theme.accent}>git_add</Text> - Stage files for commit
                     </Text>
                     <Text>
-                        <Text color="magenta">git_commit</Text> - Commit staged changes
+                        <Text color={theme.accent}>git_commit</Text> - Commit staged changes
                     </Text>
                     <Text>
-                        <Text color="magenta">git_branch_list</Text> - List all branches
+                        <Text color={theme.accent}>git_branch_list</Text> - List all branches
                     </Text>
                     <Text>
-                        <Text color="magenta">git_branch_current</Text> - Show current branch
+                        <Text color={theme.accent}>git_branch_current</Text> - Show current branch
                     </Text>
                     <Text>
-                        <Text color="magenta">git_branch_create</Text> - Create a new branch
+                        <Text color={theme.accent}>git_branch_create</Text> - Create a new branch
                     </Text>
                     <Text>
-                        <Text color="magenta">git_branch_switch</Text> - Switch branches
+                        <Text color={theme.accent}>git_branch_switch</Text> - Switch branches
                     </Text>
                 </Box>
             </Box>
 
             <Box flexDirection="column" marginBottom={1}>
-                <Text bold color="cyan">
+                <Text bold color={theme.primary}>
                     Diff Tools:
                 </Text>
                 <Box flexDirection="column" paddingLeft={1}>
                     <Text>
-                        <Text color="red">diff_files</Text> - Compare two files
+                        <Text color={theme.error}>diff_files</Text> - Compare two files
                     </Text>
                     <Text>
-                        <Text color="red">diff_show_changes</Text> - Show uncommitted changes
+                        <Text color={theme.error}>diff_show_changes</Text> - Show uncommitted changes
                     </Text>
                 </Box>
             </Box>
 
             <Box flexDirection="column">
-                <Text bold color="cyan">
+                <Text bold color={theme.primary}>
                     Keyboard Shortcuts:
                 </Text>
                 <Box flexDirection="column" paddingLeft={1}>
@@ -236,7 +237,7 @@ export function HelpMenu() {
             </Box>
 
             <Box marginTop={1} justifyContent="center">
-                <Text color="gray" dimColor>
+                <Text color={theme.dim} dimColor>
                     Tip: Create BINHARIC.md files to customize interactions with the agent
                 </Text>
             </Box>
