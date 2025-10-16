@@ -87,16 +87,16 @@ export async function autofixEdit(
     const fixer = getFixerClient();
     if (!fixer) return null;
 
+    const TIMEOUT_MS = 10000;
+    const TIMEOUT_SENTINEL = Symbol("autofix-timeout");
+
+    let timeoutId: NodeJS.Timeout | null = null;
+
     try {
         logger.info("Attempting to autofix edit search string...");
 
-        let timeoutId: NodeJS.Timeout | null = null;
-
-        const timeoutPromise = new Promise<null>((_, reject) => {
-            timeoutId = setTimeout(
-                () => reject(new Error("Autofix timeout after 10 seconds")),
-                10000,
-            );
+        const timeoutPromise = new Promise<typeof TIMEOUT_SENTINEL>((resolve) => {
+            timeoutId = setTimeout(() => resolve(TIMEOUT_SENTINEL), TIMEOUT_MS);
         });
 
         const autofixPromise = (async () => {
@@ -105,34 +105,30 @@ export async function autofixEdit(
                 prompt: fixEditPrompt(fileContent, incorrectSearch),
                 schema: autofixEditSchema,
                 schemaName: "EditAutofix",
-                schemaDescription:
-                    "Result of attempting to correct a search string for file editing",
+                schemaDescription: "Result of attempting to correct a search string for file editing",
                 onError({ error }) {
                     logger.error("Error during edit autofix streaming:", error);
                 },
             });
-
             return await result.object;
         })();
 
-        const result = await Promise.race([autofixPromise, timeoutPromise]);
+        const raced = (await Promise.race([autofixPromise, timeoutPromise])) as
+            | z.infer<typeof autofixEditSchema>
+            | typeof TIMEOUT_SENTINEL;
 
-        if (timeoutId) {
-            clearTimeout(timeoutId);
-        }
-
-        if (!result) {
+        if (raced === TIMEOUT_SENTINEL) {
             logger.warn("Autofix timed out");
             return null;
         }
 
-        if (result.success && result.correctedSearch) {
-            if (fileContent.includes(result.correctedSearch)) {
+        if (raced.success && raced.correctedSearch) {
+            if (fileContent.includes(raced.correctedSearch)) {
                 logger.info("Autofix for edit successful.", {
-                    confidence: result.confidence,
-                    explanation: result.explanation,
+                    confidence: raced.confidence,
+                    explanation: raced.explanation,
                 });
-                return result.correctedSearch;
+                return raced.correctedSearch;
             }
             logger.warn("Autofix for edit returned a search string not present in the file.");
         }
@@ -140,5 +136,7 @@ export async function autofixEdit(
     } catch (e) {
         logger.error("Edit autofixing failed.", e);
         return null;
+    } finally {
+        if (timeoutId) clearTimeout(timeoutId);
     }
 }

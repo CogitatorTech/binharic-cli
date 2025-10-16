@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { applyContextWindow } from "../../src/agent/context/contextWindow.js";
-import type { ModelConfig } from "../../src/config.js";
+import { applyContextWindow } from "../../../src/agent/context/contextWindow.js";
+import type { ModelConfig } from "../../../src/config.js";
 import type { ModelMessage } from "ai";
 
 describe("contextWindow", () => {

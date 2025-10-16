@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Config } from "../../src/config.js";
+import type { Config } from "../../../src/config.js";
 
 function validateConfiguration(config: Config): void {
     const uniqueModelNames = new Set<string>();

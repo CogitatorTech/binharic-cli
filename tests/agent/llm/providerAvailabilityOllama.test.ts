@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { checkProviderAvailability } from "../../src/agent/llm";
-import type { Config } from "../../src/config";
+import { checkProviderAvailability } from "../../../src/agent/llm";
+import type { Config } from "../../../src/config";
 
 const originalFetch = globalThis.fetch;
 

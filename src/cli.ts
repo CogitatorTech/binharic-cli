@@ -6,38 +6,9 @@ import App from "./ui/App.js";
 import logger from "./logger.js";
 import { cleanupAllSessions } from "./agent/tools/definitions/terminalSession.js";
 import { useStore } from "./agent/core/state.js";
+import { initStderrSuppression } from "./agent/errors/stderrSuppression.js";
 
-const originalStderrWrite = process.stderr.write.bind(process.stderr);
-
-process.stderr.write = function (chunk: unknown, encoding?: unknown, callback?: unknown): boolean {
-    const chunkStr = chunk?.toString() || "";
-
-    const shouldSuppress =
-        chunkStr.includes("APICallError") ||
-        chunkStr.includes("AI_APICallError") ||
-        chunkStr.includes("at file://") ||
-        chunkStr.includes("at async") ||
-        chunkStr.includes("at process.processTicksAndRejections") ||
-        (chunkStr.includes("{") && chunkStr.includes("statusCode")) ||
-        chunkStr.includes("requestBodyValues") ||
-        chunkStr.includes("responseHeaders") ||
-        chunkStr.includes("responseBody") ||
-        chunkStr.includes("[Symbol(vercel.ai.error)]");
-
-    if (shouldSuppress) {
-        logger.error("Suppressed stderr output:", { message: chunkStr.trim() });
-        if (typeof callback === "function") {
-            callback();
-        }
-        return true;
-    }
-
-    return originalStderrWrite(
-        chunk as string,
-        encoding as BufferEncoding,
-        callback as (error?: Error | null) => void,
-    );
-} as typeof process.stderr.write;
+initStderrSuppression(logger);
 
 process.removeAllListeners("unhandledRejection");
 process.removeAllListeners("uncaughtException");

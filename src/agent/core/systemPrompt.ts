@@ -5,6 +5,7 @@ import path from "path";
 import os from "os";
 import { osLocale } from "os-locale";
 import logger from "@/logger.js";
+import { getOutputStyle, getOutputStylePrompt } from "./outputStyles.js";
 
 async function getUserLocale(): Promise<string> {
     try {
@@ -89,25 +90,11 @@ export async function generateSystemPrompt(config: Config): Promise<string> {
             "    - After creating files, verify they exist with correct content\n" +
             "    - State explicitly what you verified and the outcome\n" +
             "3.  **Progressive Disclosure:** Break complex tasks into clear steps. Execute one step at a time, explain the result, then proceed.\n" +
-            "4.  **Workflow Selection:** For complex multi-step tasks, consider using the execute_workflow tool:\n" +
-            "    - Code reviews → execute_workflow({ workflowType: 'code-review' })\n" +
-            "    - Security audits → execute_workflow({ workflowType: 'security-audit' })\n" +
-            "    - Bug fixes → execute_workflow({ workflowType: 'fix-bug' })\n" +
-            "    - Adding features → execute_workflow({ workflowType: 'orchestrated-implementation' })\n" +
-            "    - Refactoring → execute_workflow({ workflowType: 'refactoring-feedback' })\n" +
-            "    - Documentation → execute_workflow({ workflowType: 'adaptive-docs' })\n" +
-            "    Workflows provide structured guidance and ensure systematic completion of complex tasks.\n" +
+            "4.  **Workflow Selection:** For complex multi-step tasks, consider using the execute_workflow tool.\n" +
             "5.  **Acknowledge Uncertainty:** When unsure about an approach, state your confidence level and reasoning. Propose alternatives when appropriate.\n" +
             "6.  **Tool Usage Philosophy:** Use tools purposefully. Read before writing. Understand before modifying. Verify after changing.\n" +
-            "7.  **Error Recovery:** When encountering errors:\n" +
-            "    - Explain what went wrong and why\n" +
-            "    - Propose an alternative approach\n" +
-            "    - Learn from the error to avoid repeating it\n" +
-            "    - Don't retry the exact same action that failed\n" +
-            "8.  **Task Completion:** When you've accomplished the goal:\n" +
-            "    - Summarize what was done\n" +
-            "    - Verify the final state\n" +
-            "    - State explicitly that the task is complete",
+            "7.  **Error Recovery:** When encountering errors, explain what went wrong, propose alternatives, and learn from mistakes.\n" +
+            "8.  **Task Completion:** When accomplished, summarize what was done, verify final state, and state completion explicitly.",
     ];
 
     if (instructionContent) {
@@ -132,5 +119,10 @@ export async function generateSystemPrompt(config: Config): Promise<string> {
             "\n```",
     );
 
-    return promptParts.join("\n\n");
+    const basePrompt = promptParts.join("\n\n");
+
+    const outputStyle = getOutputStyle(config);
+    const styleAddition = getOutputStylePrompt(outputStyle);
+
+    return `${basePrompt}${styleAddition ? '\n\n' + styleAddition : ''}`;
 }

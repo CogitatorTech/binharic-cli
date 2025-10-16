@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Config } from "../../src/config";
+import type { Config } from "../../../src/config";
 import {
     createCodeAnalysisAgent,
     createRefactoringAgent,
     createSecurityAuditAgent,
     createTestGenerationAgent,
-} from "../../src/agent/core/agents";
+} from "../../../src/agent/core/agents";
 
-vi.mock("../../src/agent/llm/provider.js", () => ({
+vi.mock("../../../src/agent/llm/provider.js", () => ({
     createLlmProvider: vi.fn(() => ({ id: "mock", provider: "openai" })),
 }));
 

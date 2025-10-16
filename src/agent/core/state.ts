@@ -13,6 +13,7 @@ import { HistoryItem, ToolRequestItem } from "../context/history.js";
 import type { ModelMessage } from "ai";
 import { applyContextWindow } from "../context/contextWindow.js";
 import type { CheckpointRequest } from "./checkpoints.js";
+import { createStreamingTextFilter, finalizeFilteredText } from "../llm/textFilters.js";
 
 const SAFE_AUTO_TOOLS = new Set([
     "read_file",
@@ -338,12 +339,8 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
 
             const currentStatus = get().status;
             if (currentStatus === "responding" || currentStatus === "executing-tool") {
-                set({ status: "idle" });
-                shouldStopAgent = true;
-                isAgentRunning = false;
-                agentLockTimestamp = 0;
-
-                logger.info("Agent stop requested - will complete when streaming ends");
+                set({ status: "interrupted" });
+                logger.info("Agent stop requested - will complete when streaming or execution ends");
             }
         },
 
@@ -611,6 +608,8 @@ async function _runAgentLogicInternal(
         };
 
         resetStreamTimeout();
+        const textFilter = createStreamingTextFilter();
+
 
         try {
             for await (const part of textStream) {
@@ -648,13 +647,26 @@ async function _runAgentLogicInternal(
                     };
                     set({ history: [...get().history, assistantMessage] });
                 }
-                (assistantMessage.content as string) += part;
-                set({ history: [...get().history] });
+
+                const filteredPart = textFilter(part);
+                if (filteredPart) {
+                    (assistantMessage.content as string) += filteredPart;
+                    set({ history: [...get().history] });
+                }
             }
         } finally {
             if (activeStreamTimeout) {
                 clearTimeout(activeStreamTimeout);
                 activeStreamTimeout = null;
+            }
+
+            if (assistantMessage && typeof assistantMessage.content === "string") {
+                const flushedContent = textFilter.flush();
+                if (flushedContent) {
+                    assistantMessage.content += flushedContent;
+                }
+                assistantMessage.content = finalizeFilteredText(assistantMessage.content);
+                set({ history: [...get().history] });
             }
         }
 

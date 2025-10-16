@@ -1,12 +1,8 @@
-// src/agent/tools/definitions/terminal_session.ts
-// Persistent terminal session management
-
 import { z } from "zod";
 import { tool } from "ai";
 import { type ChildProcess, spawn } from "child_process";
 import { ToolError } from "../../errors/index.js";
 
-// Global session storage
 const sessions = new Map<
     string,
     {
@@ -20,14 +16,12 @@ const sessions = new Map<
 
 let sessionCounter = 0;
 
-// Resource limits
 const MAX_SESSIONS = 10;
 const MAX_COMMAND_LENGTH = 10000;
-const MAX_OUTPUT_SIZE = 1024 * 1024; // 1MB
-const BACKGROUND_TIMEOUT_MS = 300000; // 5 minutes
-const MAX_OUTPUT_LINES = 1000; // Max lines in output buffer
+const MAX_OUTPUT_SIZE = 1024 * 1024;
+const BACKGROUND_TIMEOUT_MS = 300000;
+const MAX_OUTPUT_LINES = 1000;
 
-// Cleanup function to prevent memory leaks
 function cleanupSession(sessionId: string) {
     const session = sessions.get(sessionId);
     if (session) {
@@ -37,7 +31,6 @@ function cleanupSession(sessionId: string) {
         if (!session.process.killed) {
             session.process.kill();
         }
-        // Remove all event listeners to prevent memory leaks
         session.process.stdout?.removeAllListeners();
         session.process.stderr?.removeAllListeners();
         session.process.removeAllListeners();
@@ -70,12 +63,10 @@ export const runInTerminalTool = tool({
         })
         .strict(),
     execute: async ({ command, explanation, isBackground = false }) => {
-        // 1. Empty command detection
         if (!command || command.trim().length === 0) {
             throw new ToolError("Cannot execute empty command. Please provide a valid command.");
         }
 
-        // 2. Command length limits
         if (command.length > MAX_COMMAND_LENGTH) {
             throw new ToolError(
                 `Command exceeds maximum length of ${MAX_COMMAND_LENGTH} characters. ` +
@@ -83,7 +74,6 @@ export const runInTerminalTool = tool({
             );
         }
 
-        // 3. Session limits
         if (isBackground && sessions.size >= MAX_SESSIONS) {
             throw new ToolError(
                 `Maximum of ${MAX_SESSIONS} concurrent terminal sessions reached. ` +
@@ -91,7 +81,6 @@ export const runInTerminalTool = tool({
             );
         }
 
-        // 4. Check for known interactive commands that won't work
         const interactiveCommands = [
             "htop",
             "top",
@@ -112,7 +101,6 @@ export const runInTerminalTool = tool({
             );
         }
 
-        // 5. Dangerous command detection
         const dangerousPatterns = [
             {
                 pattern: /rm\s+(-[rf]+\s+)*\//i,
@@ -156,7 +144,7 @@ export const runInTerminalTool = tool({
             let outputSize = 0;
             let hasResolved = false;
 
-            const timeout = isBackground ? undefined : 30000; // 30 second timeout for foreground commands
+            const timeout = isBackground ? undefined : 30000;
 
             const child = spawn(command, {
                 cwd: process.cwd(),
@@ -169,7 +157,6 @@ export const runInTerminalTool = tool({
                 const text = data.toString();
                 outputSize += text.length;
 
-                // Output size limit enforcement
                 if (outputSize > MAX_OUTPUT_SIZE) {
                     if (!hasResolved) {
                         hasResolved = true;
@@ -196,14 +183,12 @@ export const runInTerminalTool = tool({
             child.stderr?.on("data", handleOutput);
 
             if (isBackground) {
-                // Background session timeout - auto-cleanup after 5 minutes
                 const backgroundTimeout = setTimeout(() => {
                     if (sessions.has(sessionId)) {
                         cleanupSession(sessionId);
                     }
                 }, BACKGROUND_TIMEOUT_MS);
 
-                // Store session for later retrieval
                 sessions.set(sessionId, {
                     process: child,
                     output,
@@ -214,14 +199,12 @@ export const runInTerminalTool = tool({
 
                 if (!hasResolved) {
                     hasResolved = true;
-                    // Return immediately with session ID
                     resolve(
                         `Background process started with session ID: ${sessionId}\n${explanation}\n` +
                             `Use get_terminal_output to check its status. Process will auto-terminate after 5 minutes.`,
                     );
                 }
             } else {
-                // Wait for completion
                 child.on("close", (code) => {
                     if (!hasResolved) {
                         hasResolved = true;
@@ -263,7 +246,6 @@ export const getTerminalOutputTool = tool({
         })
         .strict(),
     execute: async ({ id }) => {
-        // Session ID validation
         if (!id || typeof id !== "string") {
             throw new ToolError("Invalid session ID. Must be a non-empty string.");
         }

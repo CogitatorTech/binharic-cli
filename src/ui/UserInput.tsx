@@ -268,7 +268,7 @@ export function UserInput() {
                                 providers.get(model.provider)!.push(model);
                             });
 
-                            let output = "\n┍─ Available Models ┎\n";
+                            let output = "\n Available Models \n";
 
                             providers.forEach((models, provider) => {
                                 const providerName =
@@ -284,7 +284,6 @@ export function UserInput() {
                             });
 
                             output += "\nUse '/model <name>' to switch models\n";
-                            output += "┰─────────────────────────────┚\n";
 
                             useStore.setState((state) => ({
                                 history: [

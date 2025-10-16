@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { executeWorkflow, routeUserQuery } from "../../src/agent/workflows";
-import type { Config } from "../../src/config";
+import { executeWorkflow, routeUserQuery } from "../../../src/agent/workflows";
+import type { Config } from "../../../src/config";
 
 vi.mock("@/agent/llm/provider.js", () => ({
     createLlmProvider: vi.fn(() => "mocked-llm-provider"),
