@@ -1,7 +1,7 @@
 {
   "name": "@cogitator/binharic-cli",
-  "version": "0.1.0-alpha.5",
-  "description": "A coding agent with the persona of a Tech-Priest of the Adeptus Mechanicus",
+  "version": "0.1.0-alpha.6",
+  "description": "A multi-provider AI coding agent with the persona of a Tech-Priest",
   "main": "dist/cli.js",
   "type": "module",
   "bin": {

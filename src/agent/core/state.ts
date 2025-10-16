@@ -204,7 +204,7 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                     validateModelApiKey(modelConfig, config);
                 }
 
-                const autoContextFiles = ["BINHARIC.md", "AGENT.md"]
+                const autoContextFiles = ["BINHARIC.md"]
                     .map((p) => path.resolve(p))
                     .filter((p) => fsSync.existsSync(p));
                 if (autoContextFiles.length > 0) {

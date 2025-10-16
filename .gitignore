@@ -162,7 +162,6 @@ coverage/
 .env
 *_test.txt
 BINHARIC.md
-AGENT.md
 *.tar.gz
 *.tgz
 test.txt

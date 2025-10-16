@@ -13,7 +13,7 @@
 [![Documentation](https://img.shields.io/badge/docs-latest-8ca0d7?style=flat&labelColor=333333&logo=read-the-docs&logoColor=white)](docs)
 [![License](https://img.shields.io/badge/license-MIT-00acc1?style=flat&labelColor=333333&logo=open-source-initiative&logoColor=white)](LICENSE)
 
-A coding agent with the persona of a Tech-Priest of the Adeptus Mechanicus
+A multi-provider AI coding agent with the persona of a Tech-Priest
 
 </div>
 
@@ -34,11 +34,11 @@ like the ability to analyze projects, run tests, find bugs, and perform code rev
 ### Features
 
 - Can use models from OpenAI, Google, Anthropic, and Ollama
-- Is fully customizable (like customizing system prompt)
-- Comes with a built-in retrieval-augmented generation (RAG) pipeline
-- Comes with a large set of built-in tools (like reading and writing files)
+- Is fully customizable and extendable (system prompt and adding new tools)
+- Comes with a built-in keyword-based retrieval-augmented generation (RAG) pipeline
+- Comes with a large set of built-in tools (like for reading files and running Bash commands)
 - Can use external tools via the Model Context Protocol (MCP)
-- Comes with built-in workflows for standard software development tasks (like debugging and code review)
+- Comes with predefined workflows for common software development tasks (like debugging and code review)
 
 See the [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 
@@ -70,6 +70,8 @@ export GOOGLE_API_KEY=<your-google-api-key>
 binharic
 ```
 
+[![Binharic Start Screen](docs/assets/screenshots/start-screen-1-v0.1.0-alpha.6.png)](docs/assets/screenshots/start-screen-1-v0.1.0-alpha.6.png)
+
 [![asciicast](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C.svg)](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C)
 
 > [!NOTE]
@@ -84,16 +86,21 @@ Alternatively, you can run Binharic in a container:
 ```sh
 # API keys should be available in the environment already
 docker run -it --rm \
-  -v $(PWD):/workspace \
-  -w /workspace \
+  -v ${PWD}:/workspace \
   -e OPENAI_API_KEY \
   -e ANTHROPIC_API_KEY \
   -e GOOGLE_API_KEY \
   ghcr.io/cogitatortech/binharic-cli:<version>
 ```
 
-`<version>` should be replaced with the version of the Binharic (like `0.1.0-alpha.4`) or `latest`.
+`<version>` should be replaced with the version of the Binharic (like `0.1.0-alpha.6`) or `latest`.
 Use `latest` if you want to use the latest (development) version of Binharic.
+
+#### Configuration
+
+You can configure Binharic by editing the `~/.config/binharic/config.json5` file.
+Additionally, Binharic supports environment variables for configuration.
+See the [docs](docs) (TO BE ADDED) for more information.
 
 ---
 

@@ -15,7 +15,7 @@ export function ContextSummaryDisplay() {
             <Text color={theme.dim}>
                 {count > 0
                     ? `Reading ${count} context file(s): ${names.join(", ")}`
-                    : "No context files loaded. Add files with /add or create a BINHARIC.md or AGENT.md file."}
+                    : "No context files loaded. Add files with /add or create a BINHARIC.md file in the current directory."}
             </Text>
         </Box>
     );
