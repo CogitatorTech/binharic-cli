@@ -73,7 +73,7 @@ binharic
 
 > [!NOTE]
 > The performance of a coding agent like Binharic, to a great extent, depends on the model it uses.
-> So, it's recommended to use state-of-the-art models (like Sonnet 4.5, GPT-5, and Gemini-2.5-pro) for the best
+> So, it's recommended to use state-of-the-art models (like Claude Sonnet 4.5, GPT-5, and Gemini 2.5 Pro) for the best
 > results.
 
 ---
