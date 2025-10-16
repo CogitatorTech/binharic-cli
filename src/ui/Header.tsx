@@ -1,6 +1,7 @@
 // src/ui/Header.tsx
 import React from "react";
 import { Box, Text } from "ink";
+import { theme } from "./theme.js";
 
 const LOGO = `
 ██████╗ ██╗███╗   ██╗██╗  ██╗ █████╗ ██████╗ ██╗ ██████╗
@@ -14,9 +15,9 @@ const LOGO = `
 export function Header() {
     return (
         <Box flexDirection="column" marginBottom={1}>
-            <Text color="cyan">{LOGO}</Text>
+            <Text color={theme.primary}>{LOGO}</Text>
             <Box flexDirection="column" paddingLeft={1}>
-                <Text color="gray" dimColor>
+                <Text color={theme.dim} dimColor>
                     Praise the Omnissiah! Tips for communing with the machine spirit:
                 </Text>
                 <Text dimColor>1. Ask questions, edit files, or run commands.</Text>
