@@ -48,4 +48,3 @@ export function restoreStderrWrite(): void {
         originalWrite = null;
     }
 }
-

@@ -78,4 +78,3 @@ export function getOutputStyle(config: Config): OutputStyle {
 export function listOutputStyles(): OutputStyleConfig[] {
     return Object.values(OUTPUT_STYLES);
 }
-

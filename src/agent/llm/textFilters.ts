@@ -1,9 +1,9 @@
 export function filterReasoningTags(text: string): string {
-    return text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    return text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 }
 
 export function createStreamingTextFilter() {
-    let buffer = '';
+    let buffer = "";
     let insideThinkTag = false;
 
     const filterFunc = function filterChunk(chunk: string): string {
@@ -12,7 +12,7 @@ export function createStreamingTextFilter() {
         const thinkStartRegex = /<think>/gi;
         const thinkEndRegex = /<\/think>/gi;
 
-        let result = '';
+        let result = "";
         let lastIndex = 0;
 
         while (lastIndex < buffer.length) {
@@ -57,7 +57,7 @@ export function createStreamingTextFilter() {
 
     filterFunc.flush = function (): string {
         const remaining = buffer;
-        buffer = '';
+        buffer = "";
         return remaining;
     };
 

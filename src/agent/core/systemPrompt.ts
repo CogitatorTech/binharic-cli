@@ -124,5 +124,5 @@ export async function generateSystemPrompt(config: Config): Promise<string> {
     const outputStyle = getOutputStyle(config);
     const styleAddition = getOutputStylePrompt(outputStyle);
 
-    return `${basePrompt}${styleAddition ? '\n\n' + styleAddition : ''}`;
+    return `${basePrompt}${styleAddition ? "\n\n" + styleAddition : ""}`;
 }

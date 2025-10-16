@@ -69,6 +69,17 @@ function validateModelApiKey(modelConfig: ModelConfig, config: Config): void {
     }
 }
 
+type SessionMetrics = {
+    sessionId: string;
+    startedAt: number;
+    llmRequests: number;
+    llmApiTimeMs: number;
+    toolCallsSuccess: number;
+    toolCallsFailure: number;
+    toolTimeMs: number;
+    modelUsage: Record<string, { provider: string; modelId: string; requests: number }>;
+};
+
 type AppState = {
     history: HistoryItem[];
     commandHistory: string[];
@@ -89,6 +100,9 @@ type AppState = {
     pendingToolRequest: ToolRequestItem | null;
     pendingCheckpoint: CheckpointRequest | null;
     contextFiles: string[];
+    // New: session metrics and exit summary flag
+    metrics: SessionMetrics;
+    showExitSummary: boolean;
 };
 
 type AppActions = {
@@ -114,6 +128,8 @@ type AppActions = {
         setModel: (modelName: string) => void;
         addContextFile: (path: string) => void;
         clearContextFiles: () => void;
+        // New: exit flow
+        beginExit: () => void;
     };
 };
 
@@ -140,6 +156,17 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
     pendingToolRequest: null,
     pendingCheckpoint: null,
     contextFiles: [],
+    metrics: {
+        sessionId: randomUUID(),
+        startedAt: Date.now(),
+        llmRequests: 0,
+        llmApiTimeMs: 0,
+        toolCallsSuccess: 0,
+        toolCallsFailure: 0,
+        toolTimeMs: 0,
+        modelUsage: {},
+    },
+    showExitSummary: false,
     actions: {
         loadInitialConfig: async () => {
             logger.info("Loading initial configuration.");
@@ -307,6 +334,11 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
         },
         clearContextFiles: () => set({ contextFiles: [] }),
 
+        beginExit: () => {
+            logger.info("Exit requested - showing summary");
+            set({ showExitSummary: true });
+        },
+
         startAgent: async (input: string) => {
             if (get().status !== "idle") {
                 logger.warn("Agent already running, ignoring new start request");
@@ -340,7 +372,9 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
             const currentStatus = get().status;
             if (currentStatus === "responding" || currentStatus === "executing-tool") {
                 set({ status: "interrupted" });
-                logger.info("Agent stop requested - will complete when streaming or execution ends");
+                logger.info(
+                    "Agent stop requested - will complete when streaming or execution ends",
+                );
             }
         },
 
@@ -366,6 +400,7 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                             error: "Execution cancelled by user",
                         } as HistoryItem;
                     }
+                    const t0 = Date.now();
                     try {
                         const output = await runTool(
                             {
@@ -374,6 +409,17 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                             },
                             config,
                         );
+                        const dt = Date.now() - t0;
+                        {
+                            const current = get();
+                            set({
+                                metrics: {
+                                    ...current.metrics,
+                                    toolCallsSuccess: current.metrics.toolCallsSuccess + 1,
+                                    toolTimeMs: current.metrics.toolTimeMs + dt,
+                                },
+                            });
+                        }
                         return {
                             id: randomUUID(),
                             role: "tool-result",
@@ -382,6 +428,17 @@ export const useStore = create<AppState & AppActions>((set, get) => ({
                             output,
                         } as HistoryItem;
                     } catch (error) {
+                        const dt2 = Date.now() - t0;
+                        {
+                            const current2 = get();
+                            set({
+                                metrics: {
+                                    ...current2.metrics,
+                                    toolCallsFailure: current2.metrics.toolCallsFailure + 1,
+                                    toolTimeMs: current2.metrics.toolTimeMs + dt2,
+                                },
+                            });
+                        }
                         return {
                             id: randomUUID(),
                             role: "tool-failure",
@@ -495,6 +552,10 @@ async function _runAgentLogicInternal(
 
     const startHistoryLength = get().history.length;
 
+    // Track API timing per request
+    let apiStart = 0;
+    let apiCounted = false;
+
     try {
         const { history, config } = get();
         if (!config) throw new FatalError("Configuration not loaded.");
@@ -582,10 +643,22 @@ async function _runAgentLogicInternal(
             throw new FatalError(`Model ${config.defaultModel} not found in configuration.`);
         }
 
+        // Record model usage and increment request count
+        {
+            const current = get();
+            const mu = { ...current.metrics.modelUsage } as AppState["metrics"]["modelUsage"];
+            const key = modelConfig.name;
+            mu[key] = mu[key]
+                ? { ...mu[key], requests: mu[key].requests + 1 }
+                : { provider: modelConfig.provider, modelId: modelConfig.modelId, requests: 1 };
+            set({ metrics: { ...current.metrics, llmRequests: current.metrics.llmRequests + 1, modelUsage: mu } });
+        }
+
         sdkCompliantHistory = applyContextWindow(sdkCompliantHistory, modelConfig);
 
         const systemPrompt = await generateSystemPrompt(config);
 
+        apiStart = Date.now();
         const streamResult = await streamAssistantResponse(
             sdkCompliantHistory,
             config,
@@ -610,7 +683,6 @@ async function _runAgentLogicInternal(
         resetStreamTimeout();
         const textFilter = createStreamingTextFilter();
 
-
         try {
             for await (const part of textStream) {
                 if (shouldStopAgent) {
@@ -634,6 +706,14 @@ async function _runAgentLogicInternal(
                             },
                         ],
                     });
+
+                    // Count API time until interruption
+                    if (apiStart && !apiCounted) {
+                        const current = get();
+                        const dt = Date.now() - apiStart;
+                        set({ metrics: { ...current.metrics, llmApiTimeMs: current.metrics.llmApiTimeMs + dt } });
+                        apiCounted = true;
+                    }
                     return;
                 }
 
@@ -668,6 +748,13 @@ async function _runAgentLogicInternal(
                 assistantMessage.content = finalizeFilteredText(assistantMessage.content);
                 set({ history: [...get().history] });
             }
+            // After streaming completes, add API time once
+            if (apiStart && !apiCounted) {
+                const current = get();
+                const dt = Date.now() - apiStart;
+                set({ metrics: { ...current.metrics, llmApiTimeMs: current.metrics.llmApiTimeMs + dt } });
+                apiCounted = true;
+            }
         }
 
         if (shouldStopAgent) {
@@ -699,14 +786,12 @@ async function _runAgentLogicInternal(
                     args: ("args" in call && call.args) || ("input" in call && call.input) || {},
                 }));
 
+            // Rewrite create -> edit when file exists to avoid error and meet test expectations
             for (const call of validToolCalls) {
                 if (call.toolName === "create") {
-                    const p = (call as { args: Record<string, unknown> }).args["path"] as
-                        | string
-                        | undefined;
-                    const content = (call as { args: Record<string, unknown> }).args["content"] as
-                        | string
-                        | undefined;
+                    const args = (call as { args: Record<string, unknown> }).args || {};
+                    const p = (args["path"] as string) || (args["filePath"] as string) || undefined;
+                    const content = (args["content"] as string) || undefined;
                     if (p && fsSync.existsSync(path.resolve(p)) && typeof content === "string") {
                         (call as { toolName: string }).toolName = "edit";
                         (call as { args: Record<string, unknown> }).args = {
@@ -724,6 +809,7 @@ async function _runAgentLogicInternal(
             for (const toolCall of validToolCalls) {
                 if (SAFE_AUTO_TOOLS.has(toolCall.toolName)) {
                     autoExecutedCalls.push(toolCall);
+                    const t0 = Date.now();
                     try {
                         const output = await runTool(
                             {
@@ -732,6 +818,17 @@ async function _runAgentLogicInternal(
                             },
                             config,
                         );
+                        const dt3 = Date.now() - t0;
+                        {
+                            const current3 = get();
+                            set({
+                                metrics: {
+                                    ...current3.metrics,
+                                    toolCallsSuccess: current3.metrics.toolCallsSuccess + 1,
+                                    toolTimeMs: current3.metrics.toolTimeMs + dt3,
+                                },
+                            });
+                        }
                         autoResults.push({
                             id: randomUUID(),
                             role: "tool-result",
@@ -740,15 +837,23 @@ async function _runAgentLogicInternal(
                             output,
                         });
                     } catch (error) {
+                        const dt4 = Date.now() - t0;
+                        {
+                            const current4 = get();
+                            set({
+                                metrics: {
+                                    ...current4.metrics,
+                                    toolCallsFailure: current4.metrics.toolCallsFailure + 1,
+                                    toolTimeMs: current4.metrics.toolTimeMs + dt4,
+                                },
+                            });
+                        }
                         autoResults.push({
                             id: randomUUID(),
                             role: "tool-failure",
                             toolCallId: toolCall.toolCallId,
                             toolName: toolCall.toolName,
-                            error:
-                                error instanceof Error
-                                    ? error.message
-                                    : "An unknown error occurred",
+                            error: error instanceof Error ? error.message : "An unknown error occurred",
                         });
                     }
                 } else {

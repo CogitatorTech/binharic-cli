@@ -120,7 +120,10 @@ export class PermissionsManager {
         return "prompt";
     }
 
-    checkPath(filePath: string, operation: "read" | "write" | "delete"): "allow" | "deny" | "prompt" {
+    checkPath(
+        filePath: string,
+        operation: "read" | "write" | "delete",
+    ): "allow" | "deny" | "prompt" {
         const normalizedPath = path.normalize(filePath);
 
         if (operation === "read" && this.config.autoApprove?.readOperations) {
@@ -149,7 +152,10 @@ export class PermissionsManager {
         this.sessionAllowed.add(command);
     }
 
-    async allowPermanently(command: string, scope: "project" | "global" = "project"): Promise<void> {
+    async allowPermanently(
+        command: string,
+        scope: "project" | "global" = "project",
+    ): Promise<void> {
         this.config.allowedCommands.push(command);
         await this.save();
     }
@@ -159,4 +165,3 @@ export class PermissionsManager {
         return regex.test(value);
     }
 }
-

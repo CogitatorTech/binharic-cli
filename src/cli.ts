@@ -112,7 +112,9 @@ const handleSIGINT = () => {
 
         const exitCallback = getExitCallback();
         if (exitCallback) {
+            // Let UI handle summary and exit
             exitCallback();
+            return;
         }
 
         unmount();
@@ -136,6 +138,13 @@ process.on("SIGTERM", () => {
     }
 
     cleanupAllSessions();
+
+    const exitCallback = getExitCallback();
+    if (exitCallback) {
+        exitCallback();
+        return;
+    }
+
     unmount();
     process.exit(0);
 });

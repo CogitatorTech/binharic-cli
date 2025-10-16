@@ -105,7 +105,8 @@ export async function autofixEdit(
                 prompt: fixEditPrompt(fileContent, incorrectSearch),
                 schema: autofixEditSchema,
                 schemaName: "EditAutofix",
-                schemaDescription: "Result of attempting to correct a search string for file editing",
+                schemaDescription:
+                    "Result of attempting to correct a search string for file editing",
                 onError({ error }) {
                     logger.error("Error during edit autofix streaming:", error);
                 },
