@@ -70,6 +70,8 @@ export GOOGLE_API_KEY=<your-google-api-key>
 binharic
 ```
 
+[![Binharic Start Screen](docs/assets/screenshots/start-screen-1-v0.1.0-alpha.6.png)](docs/assets/screenshots/start-screen-1-v0.1.0-alpha.6.png)
+
 [![asciicast](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C.svg)](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C)
 
 > [!NOTE]
