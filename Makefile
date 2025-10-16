@@ -127,4 +127,32 @@ docker-image: ## Build the Docker image
 
 docker-run: ## Run the application in a Docker container
 	@echo "Running Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) with args: $(DOCKER_CONTAINER_ARGS)"
-	@docker run --rm -it $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_CONTAINER_ARGS)
+	@docker run --rm -it \
+		-v $(PWD):/workspace \
+		-w /workspace \
+		-e OPENAI_API_KEY \
+		-e ANTHROPIC_API_KEY \
+		-e GOOGLE_API_KEY \
+		$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_CONTAINER_ARGS)
+
+docker-run-local: ## Run with local config and workspace mounted
+	@echo "Running Docker with local config and workspace"
+	@docker run --rm -it \
+		-v $(PWD):/workspace \
+		-v $(HOME)/.config/binharic:/root/.config/binharic \
+		-w /workspace \
+		-e OPENAI_API_KEY \
+		-e ANTHROPIC_API_KEY \
+		-e GOOGLE_API_KEY \
+		$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_CONTAINER_ARGS)
+
+docker-shell: ## Open a shell in the Docker container for debugging
+	@echo "Opening shell in Docker container"
+	@docker run --rm -it \
+		-v $(PWD):/workspace \
+		-w /workspace \
+		-e OPENAI_API_KEY \
+		-e ANTHROPIC_API_KEY \
+		-e GOOGLE_API_KEY \
+		--entrypoint /bin/bash \
+		$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)

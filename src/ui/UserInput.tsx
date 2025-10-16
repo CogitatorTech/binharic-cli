@@ -244,8 +244,12 @@ export function UserInput() {
                         break;
                     case "quit":
                     case "exit":
+                        setInputValue("");
                         beginExit();
-                        break;
+                        setTimeout(() => {
+                            process.exit(0);
+                        }, 700);
+                        return;
                     case "system":
                         setSystemPrompt(rest);
                         break;
@@ -314,8 +318,12 @@ export function UserInput() {
                         break;
                     case "exit":
                     case "quit":
+                        setInputValue("");
                         beginExit();
-                        break;
+                        setTimeout(() => {
+                            process.exit(0);
+                        }, 700);
+                        return;
                     default:
                         startAgent(value);
                         break;

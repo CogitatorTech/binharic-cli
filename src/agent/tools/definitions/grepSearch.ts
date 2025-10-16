@@ -23,6 +23,18 @@ export const grepSearchTool = tool({
         })
         .strict(),
     execute: async ({ query, includePattern, isRegexp = false }) => {
+        if (!query || query.trim().length === 0) {
+            throw new ToolError("Search query cannot be empty");
+        }
+
+        if (query.length > 1000) {
+            throw new ToolError("Search query exceeds maximum length of 1000 characters");
+        }
+
+        if (includePattern && includePattern.length > 500) {
+            throw new ToolError("Include pattern exceeds maximum length of 500 characters");
+        }
+
         return new Promise<string>((resolve, reject) => {
             const grepArgs = ["-r", "-n"]; // recursive, line numbers
 

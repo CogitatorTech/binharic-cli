@@ -217,11 +217,27 @@ function calculateSimilarity(str1: string, str2: string): number {
 
     if (longer.length === 0) return 1.0;
 
+    const MAX_COMPARISON_LENGTH = 5000;
+    if (longer.length > MAX_COMPARISON_LENGTH) {
+        const truncatedLonger = longer.substring(0, MAX_COMPARISON_LENGTH);
+        const truncatedShorter = shorter.substring(
+            0,
+            Math.min(shorter.length, MAX_COMPARISON_LENGTH),
+        );
+        const editDistance = levenshteinDistance(truncatedLonger, truncatedShorter);
+        return (truncatedLonger.length - editDistance) / truncatedLonger.length;
+    }
+
     const editDistance = levenshteinDistance(longer, shorter);
     return (longer.length - editDistance) / longer.length;
 }
 
 function levenshteinDistance(str1: string, str2: string): number {
+    const maxLength = 10000;
+    if (str1.length > maxLength || str2.length > maxLength) {
+        return Math.max(str1.length, str2.length);
+    }
+
     const matrix: number[][] = [];
 
     for (let i = 0; i <= str2.length; i++) {

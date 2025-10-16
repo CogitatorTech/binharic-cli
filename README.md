@@ -58,15 +58,6 @@ You can follow the instructions below to install and use Binharic in your termin
 npm install -g @cogitator/binharic-cli
 ```
 
-Alternatively, you can start Binharic in a container:
-
-```sh
-docker run -it --rm ghcr.io/cogitatortech/binharic-cli:<version>
-```
-
-`<version>` should be replaced with the version of the Binharic (like `0.1.0-alpha.3`) or `latest`.
-Use `latest` if you want to use the latest (development) version of Binharic.
-
 #### Usage
 
 ```sh
@@ -85,6 +76,22 @@ binharic
 > The performance of a coding agent like Binharic, to a great extent, depends on the model it uses.
 > So, it's recommended to use state-of-the-art models (like Claude Sonnet 4.5, GPT-5, and Gemini 2.5 Pro) for the best
 > results.
+
+Alternatively, you can start Binharic in a container:
+
+```sh
+# API keys should be available in the environment already
+docker run -it --rm \
+  -v $(PWD):/workspace \
+  -w /workspace \
+  -e OPENAI_API_KEY \
+  -e ANTHROPIC_API_KEY \
+  -e GOOGLE_API_KEY \
+  ghcr.io/cogitatortech/binharic-cli:<version>
+```
+
+`<version>` should be replaced with the version of the Binharic (like `0.1.0-alpha.4`) or `latest`.
+Use `latest` if you want to use the latest (development) version of Binharic.
 
 ---
 

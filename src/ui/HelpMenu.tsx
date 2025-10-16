@@ -61,30 +61,30 @@ export function HelpMenu() {
                         <Text color={theme.warning}>/help</Text> - Show this help message
                     </Text>
                     <Text>
-                        <Text color={theme.warning}>/clear</Text> - Clear the screen and conversation
-                        history
+                        <Text color={theme.warning}>/clear</Text> - Clear the screen and
+                        conversation history
                     </Text>
                     <Text>
                         <Text color={theme.warning}>/clearHistory</Text> - Clear command history
                     </Text>
                     <Text>
-                        <Text color={theme.warning}>/quit</Text> or <Text color={theme.warning}>/exit</Text> -
-                        Exit the application
+                        <Text color={theme.warning}>/quit</Text> or{" "}
+                        <Text color={theme.warning}>/exit</Text> - Exit the application
                     </Text>
                     <Text>
-                        <Text color={theme.warning}>/model</Text> - Switch to a different model (e.g.,
-                        /model gpt-5-mini)
+                        <Text color={theme.warning}>/model</Text> - Switch to a different model
+                        (e.g., /model gpt-5-mini)
                     </Text>
                     <Text>
                         <Text color={theme.warning}>/system</Text> - Set custom system prompt
                     </Text>
                     <Text>
-                        <Text color={theme.warning}>/add</Text> - Add context files (e.g., /add README.md
-                        config.json)
+                        <Text color={theme.warning}>/add</Text> - Add context files (e.g., /add
+                        README.md config.json)
                     </Text>
                     <Text>
-                        <Text color={theme.warning}>/models</Text> - List all available model providers and
-                        models
+                        <Text color={theme.warning}>/models</Text> - List all available model
+                        providers and models
                     </Text>
                 </Box>
             </Box>
@@ -95,11 +95,12 @@ export function HelpMenu() {
                 </Text>
                 <Box flexDirection="column" paddingLeft={1}>
                     <Text>
-                        <Text color={theme.success}>read_file</Text> - Read a file from the filesystem
+                        <Text color={theme.success}>read_file</Text> - Read a file from the
+                        filesystem
                     </Text>
                     <Text>
-                        <Text color={theme.success}>read_multiple_files</Text> - Read multiple files at once
-                        (batch)
+                        <Text color={theme.success}>read_multiple_files</Text> - Read multiple files
+                        at once (batch)
                     </Text>
                     <Text>
                         <Text color={theme.success}>list</Text> - List files and directories
@@ -108,7 +109,8 @@ export function HelpMenu() {
                         <Text color={theme.success}>search</Text> - Search for files by name pattern
                     </Text>
                     <Text>
-                        <Text color={theme.success}>grep_search</Text> - Search for text within files
+                        <Text color={theme.success}>grep_search</Text> - Search for text within
+                        files
                     </Text>
                     <Text>
                         <Text color={theme.success}>create</Text> - Create a new file
@@ -117,14 +119,16 @@ export function HelpMenu() {
                         <Text color={theme.success}>edit</Text> - Edit an existing file
                     </Text>
                     <Text>
-                        <Text color={theme.success}>insert_edit_into_file</Text> - Apply smart edits to a
-                        file
+                        <Text color={theme.success}>insert_edit_into_file</Text> - Apply smart edits
+                        to a file
                     </Text>
                     <Text>
-                        <Text color={theme.success}>get_errors</Text> - Get compilation or lint errors
+                        <Text color={theme.success}>get_errors</Text> - Get compilation or lint
+                        errors
                     </Text>
                     <Text>
-                        <Text color={theme.success}>validate</Text> - Validate file operations or changes
+                        <Text color={theme.success}>validate</Text> - Validate file operations or
+                        changes
                     </Text>
                 </Box>
             </Box>
@@ -142,8 +146,8 @@ export function HelpMenu() {
                         terminal
                     </Text>
                     <Text>
-                        <Text color={theme.info}>get_terminal_output</Text> - Get output from terminal
-                        session
+                        <Text color={theme.info}>get_terminal_output</Text> - Get output from
+                        terminal session
                     </Text>
                     <Text>
                         <Text color={theme.info}>fetch</Text> - Fetch content from a URL
@@ -199,7 +203,8 @@ export function HelpMenu() {
                         <Text color={theme.error}>diff_files</Text> - Compare two files
                     </Text>
                     <Text>
-                        <Text color={theme.error}>diff_show_changes</Text> - Show uncommitted changes
+                        <Text color={theme.error}>diff_show_changes</Text> - Show uncommitted
+                        changes
                     </Text>
                 </Box>
             </Box>

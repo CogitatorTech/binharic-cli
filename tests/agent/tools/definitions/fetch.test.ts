@@ -31,7 +31,12 @@ describe("fetch tool", () => {
         const result = await fetchTool.execute!({ url: "https://example.com" }, {} as any);
 
         expect(result).toBe("Hello");
-        expect(mockFetch).toHaveBeenCalledWith("https://example.com");
+        expect(mockFetch).toHaveBeenCalledWith(
+            "https://example.com",
+            expect.objectContaining({
+                signal: expect.any(AbortSignal),
+            }),
+        );
     });
 
     it("should return raw HTML when stripMarkup is false", async () => {

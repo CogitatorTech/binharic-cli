@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Text } from "ink";
 import Spinner from "ink-spinner";
 import { theme } from "./theme.js";
+import type { Config } from "@/config.js";
 
 export interface TodoItem {
     id: string;
@@ -91,7 +92,13 @@ export const TodoList: React.FC<TodoListProps> = ({
     }
 
     return (
-        <Box flexDirection="column" borderStyle="round" borderColor={theme.border} paddingX={1} marginY={1}>
+        <Box
+            flexDirection="column"
+            borderStyle="round"
+            borderColor={theme.border}
+            paddingX={1}
+            marginY={1}
+        >
             <Text bold>
                 Progress: {completedCount}/{totalCount}
             </Text>
@@ -115,7 +122,6 @@ export const TodoList: React.FC<TodoListProps> = ({
 };
 
 export default TodoList;
-import type { Config } from "@/config.js";
 
 export type OutputStyle = "default" | "explanatory" | "learning" | "concise" | "verbose";
 
