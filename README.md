@@ -13,7 +13,7 @@
 [![Documentation](https://img.shields.io/badge/docs-latest-8ca0d7?style=flat&labelColor=333333&logo=read-the-docs&logoColor=white)](docs)
 [![License](https://img.shields.io/badge/license-MIT-00acc1?style=flat&labelColor=333333&logo=open-source-initiative&logoColor=white)](LICENSE)
 
-A terminal-based AI coding agent with the persona of a Tech-Priest
+A multi-provider AI coding agent with the persona of a Tech-Priest
 
 </div>
 
@@ -82,17 +82,23 @@ binharic
 Alternatively, you can run Binharic in a container:
 
 ```sh
-# API keys and PWD should be available in the environment already
+# API keys should be available in the environment already
 docker run -it --rm \
-  -v $(PWD):/workspace \
+  -v ${PWD}:/workspace \
   -e OPENAI_API_KEY \
   -e ANTHROPIC_API_KEY \
   -e GOOGLE_API_KEY \
   ghcr.io/cogitatortech/binharic-cli:<version>
 ```
 
-`<version>` should be replaced with the version of the Binharic (like `0.1.0-alpha.4`) or `latest`.
+`<version>` should be replaced with the version of the Binharic (like `0.1.0-alpha.6`) or `latest`.
 Use `latest` if you want to use the latest (development) version of Binharic.
+
+#### Configuration
+
+You can configure Binharic by editing the `~/.config/binharic/config.json5` file.
+Additionally, Binharic supports environment variables for configuration.
+See the [docs](docs) (TO BE ADDED) for more information.
 
 ---
 
