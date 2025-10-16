@@ -13,7 +13,7 @@
 [![Documentation](https://img.shields.io/badge/docs-latest-8ca0d7?style=flat&labelColor=333333&logo=read-the-docs&logoColor=white)](docs)
 [![License](https://img.shields.io/badge/license-MIT-00acc1?style=flat&labelColor=333333&logo=open-source-initiative&logoColor=white)](LICENSE)
 
-A coding agent with the persona of a Tech-Priest of the Adeptus Mechanicus
+A terminal-based AI coding agent with the persona of a Tech-Priest
 
 </div>
 
@@ -34,11 +34,11 @@ like the ability to analyze projects, run tests, find bugs, and perform code rev
 ### Features
 
 - Can use models from OpenAI, Google, Anthropic, and Ollama
-- Is fully customizable (like customizing system prompt)
+- Is fully customizable and extendable (system prompt and adding new tools)
 - Comes with a built-in keyword-based retrieval-augmented generation (RAG) pipeline
-- Comes with a large set of built-in tools (like reading and writing files)
+- Comes with a large set of built-in tools (like for reading files and running Bash commands)
 - Can use external tools via the Model Context Protocol (MCP)
-- Comes with built-in workflows for standard software development tasks (like debugging and code review)
+- Comes with predefined workflows for common software development tasks (like debugging and code review)
 
 See the [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
 

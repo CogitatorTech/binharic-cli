@@ -78,7 +78,6 @@ LICENSE
 CODE_OF_CONDUCT.md
 CONTRIBUTING.md
 BINHARIC.md
-AGENT.md
 /docs/
 /tests/
 vitest.config.ts

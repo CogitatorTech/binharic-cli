@@ -7,7 +7,7 @@ COPY src ./src
 RUN npm run build
 
 FROM node:20-alpine AS runtime
-RUN apk add --no-cache bash git grep findutils coreutils sed gawk curl wget openssh-client ca-certificates make
+RUN apk add --no-cache bash git grep findutils coreutils sed gawk curl wget openssh-client ca-certificates make nano
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
