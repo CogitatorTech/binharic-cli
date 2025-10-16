@@ -36,7 +36,8 @@ like the ability to analyze projects, run tests, find bugs, and perform code rev
 - Can use models from OpenAI, Google, Anthropic, and Ollama
 - Is fully customizable (like customizing system prompt)
 - Comes with a built-in retrieval-augmented generation (RAG) pipeline
-- Comes with a large set of built-in tools (like reading and writing files); can use external tools via MCP
+- Comes with a large set of built-in tools (like reading and writing files)
+- Can use external tools via Model Context Protocol (MCP)
 - Comes with built-in workflows for standard software development tasks (like debugging and code review)
 
 See the [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
