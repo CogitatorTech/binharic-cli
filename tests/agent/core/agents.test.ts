@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createAgentByType, createBinharicAgent } from "../../src/agent/core/agents";
-import type { Config } from "../../src/config";
+import { createAgentByType, createBinharicAgent } from "../../../src/agent/core/agents";
+import type { Config } from "../../../src/config";
 
-vi.mock("../../src/agent/llm/provider.js", () => ({
+vi.mock("../../../src/agent/llm/provider.js", () => ({
     createLlmProvider: vi.fn(() => ({
         provider: "openai",
         modelId: "gpt-4o",
@@ -14,7 +14,7 @@ vi.mock("../../src/agent/llm/provider.js", () => ({
     })),
 }));
 
-vi.mock("../../src/agent/core/systemPrompt.js", () => ({
+vi.mock("../../../src/agent/core/systemPrompt.js", () => ({
     generateSystemPrompt: vi.fn(async () => "Test system prompt"),
 }));
 

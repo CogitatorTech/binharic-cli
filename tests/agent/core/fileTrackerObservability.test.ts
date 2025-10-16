@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { FileTracker } from "../../src/agent/core/fileTracker.js";
+import { FileTracker } from "../../../src/agent/core/fileTracker.js";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
@@ -10,8 +10,7 @@ describe("FileTracker Observability", () => {
 
     beforeEach(async () => {
         tracker = new FileTracker();
-        testDir = path.join(os.tmpdir(), `filetracker-test-${Date.now()}`);
-        await fs.mkdir(testDir, { recursive: true });
+        testDir = await fs.mkdtemp(path.join(os.tmpdir(), "filetracker-test-"));
     });
 
     afterEach(async () => {

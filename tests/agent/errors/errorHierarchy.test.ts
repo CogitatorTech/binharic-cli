@@ -7,7 +7,7 @@ import {
     ToolError,
     TransientError,
     ValidationError,
-} from "../../src/agent/errors/index.js";
+} from "../../../src/agent/errors/index.js";
 
 describe("Error Type Hierarchy", () => {
     describe("AppError Base Class", () => {

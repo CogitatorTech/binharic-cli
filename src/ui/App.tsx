@@ -10,6 +10,7 @@ import { HelpMenu } from "./HelpMenu.js";
 import { ContextSummaryDisplay } from "./ContextSummaryDisplay.js";
 import { ToolConfirmation } from "./ToolConfirmation.js";
 import { CheckpointConfirmation } from "./CheckpointConfirmation.js";
+import ExitSummary from "./ExitSummary.js";
 
 declare global {
     // augment global object with optional exit callback holder
@@ -18,14 +19,17 @@ declare global {
 
 export default function App() {
     const { exit } = useApp();
-    const { loadInitialConfig, helpMenuOpen, status, clearError } = useStore(
-        useShallow((s) => ({
-            loadInitialConfig: s.actions.loadInitialConfig,
-            helpMenuOpen: s.helpMenuOpen,
-            status: s.status,
-            clearError: s.actions.clearError,
-        })),
-    );
+    const { loadInitialConfig, helpMenuOpen, status, clearError, showExitSummary, beginExit } =
+        useStore(
+            useShallow((s) => ({
+                loadInitialConfig: s.actions.loadInitialConfig,
+                helpMenuOpen: s.helpMenuOpen,
+                status: s.status,
+                clearError: s.actions.clearError,
+                showExitSummary: s.showExitSummary,
+                beginExit: s.actions.beginExit,
+            })),
+        );
 
     useEffect(() => {
         loadInitialConfig();
@@ -33,10 +37,17 @@ export default function App() {
         const g = globalThis as typeof globalThis & {
             __binharic_exit_callback?: () => void;
         };
-        if (typeof g.__binharic_exit_callback === "undefined") {
-            g.__binharic_exit_callback = exit;
-        }
-    }, [loadInitialConfig, exit]);
+        // Install a custom exit callback that shows summary before exiting
+        g.__binharic_exit_callback = () => {
+            beginExit();
+            // Give Ink time to render the summary, then exit the app and process
+            setTimeout(() => {
+                exit();
+                // extra safety: force process exit shortly after unmount
+                setTimeout(() => process.exit(0), 100);
+            }, 600);
+        };
+    }, [loadInitialConfig, exit, beginExit]);
 
     useInput(() => {
         if (status === "error") {
@@ -49,18 +60,20 @@ export default function App() {
             <Box paddingX={1}>
                 <Header />
             </Box>
-            <History />
+            {!showExitSummary && <History />}
             <Box flexDirection="column" paddingX={1}>
                 {helpMenuOpen && <HelpMenu />}
-                <ContextSummaryDisplay />
-                {status === "checkpoint-request" ? (
+                {!showExitSummary && <ContextSummaryDisplay />}
+                {showExitSummary ? (
+                    <ExitSummary />
+                ) : status === "checkpoint-request" ? (
                     <CheckpointConfirmation />
                 ) : status === "tool-request" ? (
                     <ToolConfirmation />
                 ) : (
                     <UserInput />
                 )}
-                <Footer />
+                {!showExitSummary && <Footer />}
             </Box>
         </Box>
     );

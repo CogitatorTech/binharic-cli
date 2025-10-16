@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Text, useInput } from "ink";
 import { useStore } from "@/agent/core/state.js";
 import { useShallow } from "zustand/react/shallow";
+import { theme } from "./theme.js";
 
 export function CheckpointConfirmation() {
     const { pendingCheckpoint, confirmCheckpoint, rejectCheckpoint } = useStore(
@@ -22,16 +23,16 @@ export function CheckpointConfirmation() {
 
     if (!pendingCheckpoint) return null;
 
-    const getRiskColor = (level: string) => {
+    const getRiskColor = (level: string): string => {
         switch (level) {
             case "critical":
-                return "red";
+                return theme.error;
             case "high":
-                return "yellow";
+                return theme.warning;
             case "medium":
-                return "cyan";
+                return theme.info;
             default:
-                return "gray";
+                return theme.dim;
         }
     };
 
@@ -48,16 +49,18 @@ export function CheckpointConfirmation() {
         }
     };
 
+    const color = getRiskColor(pendingCheckpoint.riskLevel);
+
     return (
         <Box
             flexDirection="column"
             borderStyle="round"
-            borderColor={getRiskColor(pendingCheckpoint.riskLevel)}
+            borderColor={color}
             paddingX={1}
             marginTop={1}
         >
             <Box>
-                <Text bold color={getRiskColor(pendingCheckpoint.riskLevel)}>
+                <Text bold color={color}>
                     {getRiskLabel(pendingCheckpoint.riskLevel)} - Sacred Checkpoint Required
                 </Text>
             </Box>
@@ -80,7 +83,7 @@ export function CheckpointConfirmation() {
                 <Box marginTop={1} flexDirection="column">
                     <Text dimColor>Additional Details:</Text>
                     {Object.entries(pendingCheckpoint.details).map(([key, value]) => (
-                        <Text key={key} dimColor>
+                        <Text key={key} color={theme.dim}>
                             {key}: {String(value)}
                         </Text>
                     ))}
@@ -88,7 +91,7 @@ export function CheckpointConfirmation() {
             )}
 
             <Box marginTop={1}>
-                <Text color="gray">
+                <Text color={theme.dim}>
                     Press ENTER to grant the Omnissiah's blessing | ESC to deny this operation
                 </Text>
             </Box>

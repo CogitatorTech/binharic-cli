@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Text, useInput } from "ink";
 import { useStore } from "@/agent/core/state.js";
 import { useShallow } from "zustand/react/shallow";
+import { theme } from "./theme.js";
 
 export function ToolConfirmation() {
     const { pendingToolRequest, confirm, reject } = useStore(
@@ -26,7 +27,7 @@ export function ToolConfirmation() {
         <Box
             flexDirection="column"
             borderStyle="round"
-            borderColor="yellow"
+            borderColor={theme.warning}
             paddingX={1}
             marginTop={1}
         >
@@ -39,14 +40,14 @@ export function ToolConfirmation() {
 
                 return (
                     <Box key={call.toolCallId} flexDirection="column" marginLeft={2}>
-                        <Text color="yellow">
+                        <Text color={theme.warning}>
                             › {call.toolName}({argsStr})
                         </Text>
                     </Box>
                 );
             })}
             <Box marginTop={1}>
-                <Text color="gray">Press ENTER to grant blessing | ESC to deny the ritual</Text>
+                <Text color={theme.dim}>Press ENTER to grant blessing | ESC to deny the ritual</Text>
             </Box>
         </Box>
     );

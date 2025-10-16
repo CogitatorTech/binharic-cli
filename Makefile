@@ -4,6 +4,9 @@
 PACKAGE_MANAGER   ?= npm
 NODE_MODULES_DIR  ?= node_modules
 REMOVABLE_THINGS  ?= .vitest-cache coverage site
+DOCKER_IMAGE_NAME ?= binharic-cli
+DOCKER_IMAGE_TAG  ?= latest
+DOCKER_CONTAINER_ARGS       ?=
 
 # ==============================================================================
 # SETUP & CHECKS
@@ -22,7 +25,8 @@ check-deps:
 
 # Declare all targets as phony (not files)
 .PHONY: help install check-deps test coverage lint lint-fix format typecheck build run clean reset setup-hooks \
- test-hooks npm-login npm-whoami pack pack-dry-run publish publish-dry-run version-patch version-minor version-major
+ test-hooks npm-login npm-whoami pack pack-dry-run publish publish-dry-run version-patch version-minor version-major \
+ docker-image docker-run
 
 .DEFAULT_GOAL := help
 
@@ -84,7 +88,7 @@ test-hooks: ## Test Git hooks on all files
 	@pre-commit run --all-files --show-diff-on-failure
 
 # ==============================================================================
-# PUBLISHING
+# PUBLISHING TO NPM
 # ==============================================================================
 npm-login: ## Log in to npm registry
 	@$(PACKAGE_MANAGER) login
@@ -112,3 +116,15 @@ version-minor: ## Bump minor version (x.y.z -> x.(y+1).0)
 
 version-major: ## Bump major version ((x+1).0.0)
 	@$(PACKAGE_MANAGER) version major
+
+# ==============================================================================
+# DOCKER
+# ==============================================================================
+
+docker-image: ## Build the Docker image
+	@echo "Building Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)"
+	@docker build -t $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) .
+
+docker-run: ## Run the application in a Docker container
+	@echo "Running Docker image: $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) with args: $(DOCKER_CONTAINER_ARGS)"
+	@docker run --rm -it $(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG) $(DOCKER_CONTAINER_ARGS)

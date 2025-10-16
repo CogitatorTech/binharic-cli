@@ -36,7 +36,8 @@ like the ability to analyze projects, run tests, find bugs, and perform code rev
 - Can use models from OpenAI, Google, Anthropic, and Ollama
 - Is fully customizable (like customizing system prompt)
 - Comes with a built-in retrieval-augmented generation (RAG) pipeline
-- Comes with a large set of built-in tools (like reading and writing files); can use external tools via MCP
+- Comes with a large set of built-in tools (like reading and writing files)
+- Can use external tools via Model Context Protocol (MCP)
 - Comes with built-in workflows for standard software development tasks (like debugging and code review)
 
 See the [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
@@ -70,6 +71,11 @@ binharic
 ```
 
 [![asciicast](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C.svg)](https://asciinema.org/a/vDae95b1lm20X7HGSlcVe3M6C)
+
+> [!NOTE]
+> The performance of a coding agent like Binharic, to a great extent, depends on the model it uses.
+> So, it's recommended to use state-of-the-art models (like Claude Sonnet 4.5, GPT-5, and Gemini 2.5 Pro) for the best
+> results.
 
 ---
 

@@ -9,6 +9,7 @@ import path from "path";
 import { useShallow } from "zustand/react/shallow";
 import Spinner from "ink-spinner";
 import { encode } from "gpt-tokenizer";
+import { theme } from "./theme.js";
 
 const statusTexts: { [key: string]: string } = {
     initializing: "Awakening the machine spirit...",
@@ -57,32 +58,32 @@ export function Footer() {
             {status !== "idle" && status !== "error" && (
                 <Box marginBottom={1} justifyContent="center">
                     <Spinner type="dots" />
-                    {statusText && <Text> {statusText}</Text>}
+                    {statusText && <Text color={theme.dim}> {statusText}</Text>}
                 </Box>
             )}
 
             {isAgentBusy && (
                 <Box marginBottom={1} justifyContent="center">
-                    <Text color="yellow">Press ESC to cancel</Text>
+                    <Text color={theme.warning}>Press ESC to cancel</Text>
                 </Box>
             )}
 
             {status === "error" && (
                 <Box flexDirection="column" alignItems="center" marginBottom={1}>
-                    <Text color="red">⚠️ Corruption detected in the machine spirit: {error}</Text>
-                    <Text color="yellow">Consult the sacred logs: {logsDir}</Text>
+                    <Text color={theme.error}>⚠️ Corruption detected in the machine spirit: {error}</Text>
+                    <Text color={theme.warning}>Consult the sacred logs: {logsDir}</Text>
                     <Text>Press any key to recalibrate and continue.</Text>
                 </Box>
             )}
 
             <Box justifyContent="space-between">
                 <Box>
-                    <Text color="gray">{cwd}</Text>
-                    <Text color="gray"> ({branchName})</Text>
+                    <Text color={theme.dim}>{cwd}</Text>
+                    <Text color={theme.dim}> ({branchName})</Text>
                 </Box>
 
                 <Box>
-                    <Text color="blue">{modelName}</Text>
+                    <Text color={theme.info}>{modelName}</Text>
                 </Box>
             </Box>
         </Box>

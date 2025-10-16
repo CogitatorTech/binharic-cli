@@ -42,6 +42,7 @@ export function UserInput() {
         addContextFile,
         config,
         stopAgent,
+        beginExit,
     } = useStore(
         useShallow((s) => ({
             startAgent: s.actions.startAgent,
@@ -59,6 +60,7 @@ export function UserInput() {
             addContextFile: s.actions.addContextFile,
             config: s.config,
             stopAgent: s.actions.stopAgent,
+            beginExit: s.actions.beginExit,
         })),
     );
     const { exit } = useApp();
@@ -242,7 +244,7 @@ export function UserInput() {
                         break;
                     case "quit":
                     case "exit":
-                        exit();
+                        beginExit();
                         break;
                     case "system":
                         setSystemPrompt(rest);
@@ -268,7 +270,7 @@ export function UserInput() {
                                 providers.get(model.provider)!.push(model);
                             });
 
-                            let output = "\n┍─ Available Models ┎\n";
+                            let output = "\n Available Models \n";
 
                             providers.forEach((models, provider) => {
                                 const providerName =
@@ -284,7 +286,6 @@ export function UserInput() {
                             });
 
                             output += "\nUse '/model <name>' to switch models\n";
-                            output += "┰─────────────────────────────┚\n";
 
                             useStore.setState((state) => ({
                                 history: [
@@ -310,6 +311,10 @@ export function UserInput() {
                         break;
                     case "clear history":
                         clearCommandHistory();
+                        break;
+                    case "exit":
+                    case "quit":
+                        beginExit();
                         break;
                     default:
                         startAgent(value);
