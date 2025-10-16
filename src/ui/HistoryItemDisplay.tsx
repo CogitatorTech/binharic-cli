@@ -59,7 +59,9 @@ function renderInlineCode(text: string) {
                 typeof p === "string" ? (
                     <Text key={i}>{p}</Text>
                 ) : (
-                    <Text key={i} color={theme.codeInline}>{p.code}</Text>
+                    <Text key={i} color={theme.codeInline}>
+                        {p.code}
+                    </Text>
                 ),
             )}
         </>
@@ -78,13 +80,15 @@ function AssistantMessageContent({ content }: { content: AssistantContent | stri
                 seg.type === "text" ? (
                     <Text key={idx}>{renderInlineCode(seg.value)}</Text>
                 ) : (
-                    <Box key={idx} flexDirection="column" borderStyle="classic" borderColor={theme.codeBlockBorder} paddingX={1}>
-                        {seg.lang && (
-                            <Text color={theme.dim}>{seg.lang}</Text>
-                        )}
-                        <Text>
-                            {seg.value}
-                        </Text>
+                    <Box
+                        key={idx}
+                        flexDirection="column"
+                        borderStyle="classic"
+                        borderColor={theme.codeBlockBorder}
+                        paddingX={1}
+                    >
+                        {seg.lang && <Text color={theme.dim}>{seg.lang}</Text>}
+                        <Text>{seg.value}</Text>
                     </Box>
                 ),
             )}
@@ -98,7 +102,12 @@ export function HistoryItemDisplay({ message }: { message: HistoryItem }) {
             return <Text color={theme.userPrompt}>&gt; {message.content}</Text>;
         case "assistant":
             return (
-                <Box borderStyle="round" borderColor={theme.assistantBorder} paddingX={1} flexDirection="column">
+                <Box
+                    borderStyle="round"
+                    borderColor={theme.assistantBorder}
+                    paddingX={1}
+                    flexDirection="column"
+                >
                     <AssistantMessageContent content={message.content} />
                 </Box>
             );
@@ -108,7 +117,12 @@ export function HistoryItemDisplay({ message }: { message: HistoryItem }) {
             return null;
         case "tool-failure":
             return (
-                <Box borderStyle="round" borderColor={theme.error} paddingX={1} flexDirection="column">
+                <Box
+                    borderStyle="round"
+                    borderColor={theme.error}
+                    paddingX={1}
+                    flexDirection="column"
+                >
                     <Text color={theme.error} bold>
                         › Tool Failure ({message.toolName}):
                     </Text>

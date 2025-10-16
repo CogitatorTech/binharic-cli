@@ -52,6 +52,7 @@ const { unmount, waitUntilExit } = render(React.createElement(App));
 let ctrlCPressCount = 0;
 let ctrlCTimeout: NodeJS.Timeout | null = null;
 let exitCallbackSet = false;
+let isExitingGlobal = false;
 
 export function setExitCallback(callback: () => void) {
     if (!exitCallbackSet) {
@@ -64,7 +65,47 @@ function getExitCallback(): (() => void) | null {
     return (globalThis as any).__binharic_exit_callback || null;
 }
 
+function cleanupAndExit(code: number = 0) {
+    if (isExitingGlobal) {
+        return;
+    }
+    isExitingGlobal = true;
+
+    if (ctrlCTimeout) {
+        clearTimeout(ctrlCTimeout);
+        ctrlCTimeout = null;
+    }
+
+    cleanupAllSessions();
+
+    if (process.stdin.isTTY && process.stdin.setRawMode) {
+        try {
+            process.stdin.setRawMode(false);
+        } catch (error) {
+            logger.warn("Failed to restore stdin mode:", error);
+        }
+    }
+
+    const exitCallback = getExitCallback();
+    if (exitCallback) {
+        try {
+            exitCallback();
+        } catch (error) {
+            logger.error("Error in exit callback:", error);
+            unmount();
+            process.exit(code);
+        }
+    } else {
+        unmount();
+        process.exit(code);
+    }
+}
+
 const handleSIGINT = () => {
+    if (isExitingGlobal) {
+        return;
+    }
+
     ctrlCPressCount++;
 
     if (ctrlCTimeout) {
@@ -99,27 +140,7 @@ const handleSIGINT = () => {
         console.log("│  May the Omnissiah preserve our data.             │");
         console.log("╰────────────────────────────────────────────────────╯\n");
 
-        if (ctrlCTimeout) {
-            clearTimeout(ctrlCTimeout);
-            ctrlCTimeout = null;
-        }
-
-        cleanupAllSessions();
-
-        if (process.stdin.isTTY && process.stdin.setRawMode) {
-            process.stdin.setRawMode(false);
-        }
-
-        const exitCallback = getExitCallback();
-        if (exitCallback) {
-            // Let UI handle summary and exit
-            exitCallback();
-            return;
-        }
-
-        unmount();
-        logger.info("Application exit complete");
-        process.exit(0);
+        cleanupAndExit(0);
     }
 };
 
@@ -127,24 +148,10 @@ process.on("SIGINT", handleSIGINT);
 
 process.on("SIGTERM", () => {
     logger.info("Received SIGTERM, powering down Machine Spirit. The Omnissiah protects...");
+    cleanupAndExit(0);
+});
 
-    if (ctrlCTimeout) {
-        clearTimeout(ctrlCTimeout);
-        ctrlCTimeout = null;
-    }
-
-    if (process.stdin.isTTY && process.stdin.setRawMode) {
-        process.stdin.setRawMode(false);
-    }
-
+process.on("exit", (code) => {
+    logger.info(`Process exiting with code: ${code}`);
     cleanupAllSessions();
-
-    const exitCallback = getExitCallback();
-    if (exitCallback) {
-        exitCallback();
-        return;
-    }
-
-    unmount();
-    process.exit(0);
 });

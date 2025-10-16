@@ -552,7 +552,6 @@ async function _runAgentLogicInternal(
 
     const startHistoryLength = get().history.length;
 
-    // Track API timing per request
     let apiStart = 0;
     let apiCounted = false;
 
@@ -651,7 +650,13 @@ async function _runAgentLogicInternal(
             mu[key] = mu[key]
                 ? { ...mu[key], requests: mu[key].requests + 1 }
                 : { provider: modelConfig.provider, modelId: modelConfig.modelId, requests: 1 };
-            set({ metrics: { ...current.metrics, llmRequests: current.metrics.llmRequests + 1, modelUsage: mu } });
+            set({
+                metrics: {
+                    ...current.metrics,
+                    llmRequests: current.metrics.llmRequests + 1,
+                    modelUsage: mu,
+                },
+            });
         }
 
         sdkCompliantHistory = applyContextWindow(sdkCompliantHistory, modelConfig);
@@ -711,7 +716,12 @@ async function _runAgentLogicInternal(
                     if (apiStart && !apiCounted) {
                         const current = get();
                         const dt = Date.now() - apiStart;
-                        set({ metrics: { ...current.metrics, llmApiTimeMs: current.metrics.llmApiTimeMs + dt } });
+                        set({
+                            metrics: {
+                                ...current.metrics,
+                                llmApiTimeMs: current.metrics.llmApiTimeMs + dt,
+                            },
+                        });
                         apiCounted = true;
                     }
                     return;
@@ -752,7 +762,12 @@ async function _runAgentLogicInternal(
             if (apiStart && !apiCounted) {
                 const current = get();
                 const dt = Date.now() - apiStart;
-                set({ metrics: { ...current.metrics, llmApiTimeMs: current.metrics.llmApiTimeMs + dt } });
+                set({
+                    metrics: {
+                        ...current.metrics,
+                        llmApiTimeMs: current.metrics.llmApiTimeMs + dt,
+                    },
+                });
                 apiCounted = true;
             }
         }
@@ -853,7 +868,10 @@ async function _runAgentLogicInternal(
                             role: "tool-failure",
                             toolCallId: toolCall.toolCallId,
                             toolName: toolCall.toolName,
-                            error: error instanceof Error ? error.message : "An unknown error occurred",
+                            error:
+                                error instanceof Error
+                                    ? error.message
+                                    : "An unknown error occurred",
                         });
                     }
                 } else {
@@ -895,7 +913,7 @@ async function _runAgentLogicInternal(
         }
 
         consecutiveErrors = 0;
-    } catch (error) {
+    } catch (error: unknown) {
         if (activeStreamTimeout) {
             clearTimeout(activeStreamTimeout);
             activeStreamTimeout = null;
@@ -926,6 +944,10 @@ async function _runAgentLogicInternal(
         }
 
         consecutiveErrors++;
+        isAgentRunning = false;
+        agentLockTimestamp = 0;
+        shouldStopAgent = false;
+
         const finalErrorMessage = typedError.message;
         logger.error(`Fatal or unhandled error: ${finalErrorMessage}`);
         set({

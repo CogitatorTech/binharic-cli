@@ -103,7 +103,7 @@ It includes planned features, improvements, and their current implementation sta
     - [x] File search with @ mention
     - [x] Non-blocking UI during LLM responses
     - [x] Command syntax highlighting (partial match in yellow, full match in cyan)
-    - [x] Colored help menu items**
+    - [x] Colored help menu items\*\*
     - [x] Clean message display (no "Binharic:" prefix)
     - [x] Dynamic username from system (not hardcoded)
     - [x] Tool results hidden from UI (only failures shown)
@@ -250,7 +250,7 @@ It includes planned features, improvements, and their current implementation sta
     - [x] Multi-step tool execution with automatic loop control
     - [x] Specialized agents with distinct personalities
     - [ ] onStepFinish callbacks for monitoring
-    - [ ] prepareStep callbacks for dynamic configuration**
+    - [ ] prepareStep callbacks for dynamic configuration\*\*
     - [ ] Multiple stopping conditions (step count, budget, errors, validation, completion)
     - [ ] Goal-oriented planning
     - [ ] Task decomposition

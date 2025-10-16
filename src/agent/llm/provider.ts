@@ -9,6 +9,7 @@ import type { Config, ModelConfig } from "@/config.js";
 import { FatalError, TransientError } from "../errors/index.js";
 import { tools } from "@/agent/tools/index.js";
 import { createModelRegistry } from "./modelRegistry.js";
+import { getCircuitBreaker } from "../core/circuitBreaker.js";
 
 let globalRegistry: ReturnType<typeof createModelRegistry> | null = null;
 
@@ -203,90 +204,101 @@ export async function streamAssistantResponse(
 
     logger.info(`Using model: ${modelConfig.name}`);
 
-    let llmProvider;
-    try {
-        llmProvider = createLlmProvider(modelConfig, config);
-    } catch (error) {
-        if (error instanceof FatalError) throw error;
-        throw new FatalError(
-            `Failed to create LLM provider: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-    }
-
-    const maxItems = config.history?.maxItems;
-    const truncatedHistory =
-        maxItems && history.length > maxItems ? history.slice(-maxItems) : history;
-
-    logger.info("Streaming text from LLM provider with native AI SDK tool calling.");
-    logger.debug({
-        systemPrompt: systemPrompt.substring(0, 200) + "...",
-        messageCount: truncatedHistory.length,
+    const circuitBreaker = getCircuitBreaker(`llm-${modelConfig.provider}`, {
+        failureThreshold: 5,
+        successThreshold: 2,
+        timeout: 90000,
+        resetTimeout: 60000,
     });
 
-    try {
-        const result = await Promise.race([
-            streamText({
-                model: llmProvider,
-                system: systemPrompt,
-                messages: truncatedHistory,
-                experimental_telemetry: { isEnabled: false },
-                tools,
-                experimental_context: config,
-            }),
-            new Promise((_, reject) =>
-                setTimeout(
-                    () => reject(new TransientError("LLM request timed out after 60 seconds")),
-                    60000,
+    return await circuitBreaker.execute(async () => {
+        let llmProvider;
+        try {
+            llmProvider = createLlmProvider(modelConfig, config);
+        } catch (error) {
+            if (error instanceof FatalError) throw error;
+            throw new FatalError(
+                `Failed to create LLM provider: ${error instanceof Error ? error.message : "Unknown error"}`,
+            );
+        }
+
+        const maxItems = config.history?.maxItems;
+        const truncatedHistory =
+            maxItems && history.length > maxItems ? history.slice(-maxItems) : history;
+
+        logger.info("Streaming text from LLM provider with native AI SDK tool calling.");
+        logger.debug({
+            systemPrompt: systemPrompt.substring(0, 200) + "...",
+            messageCount: truncatedHistory.length,
+        });
+
+        try {
+            const result = await Promise.race([
+                streamText({
+                    model: llmProvider,
+                    system: systemPrompt,
+                    messages: truncatedHistory,
+                    experimental_telemetry: { isEnabled: false },
+                    tools,
+                    experimental_context: config,
+                }),
+                new Promise((_, reject) =>
+                    setTimeout(
+                        () => reject(new TransientError("LLM request timed out after 60 seconds")),
+                        60000,
+                    ),
                 ),
-            ),
-        ]);
+            ]);
 
-        return result as Awaited<ReturnType<typeof streamText>>;
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        const status = (error as Error & { status?: number })?.status;
+            return result as Awaited<ReturnType<typeof streamText>>;
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error ? error.message : "An unknown error occurred.";
+            const status = (error as Error & { status?: number })?.status;
 
-        logger.error(`Error streaming from LLM: ${errorMessage}`, { status });
+            logger.error(`Error streaming from LLM: ${errorMessage}`, { status });
 
-        if (error instanceof TransientError || error instanceof FatalError) {
-            throw error;
-        }
-
-        if (status) {
-            if (status === 401) {
-                if (
-                    errorMessage.includes("insufficient permissions") ||
-                    errorMessage.includes("Missing scopes")
-                ) {
-                    throw new FatalError(
-                        `API key permissions error: Your OpenAI API key lacks required permissions.\n\n` +
-                            `This usually means:\n` +
-                            `1. Your API key doesn't have access to the requested model\n` +
-                            `2. The model requires different API scopes than your key has\n` +
-                            `3. You may need to use a different model (gpt-5-mini, gpt-5-nano, or gpt-4o)\n\n` +
-                            `Try switching models with: /model gpt-5-mini\n` +
-                            `Or use Ollama locally: /model qwen3\n\n` +
-                            `Praise the Omnissiah! The machine spirit requires proper authorization.`,
-                    );
-                }
-                throw new FatalError(`API authentication failed: ${errorMessage}`);
+            if (error instanceof TransientError || error instanceof FatalError) {
+                throw error;
             }
-            if (status === 429) throw new TransientError(`Rate limit exceeded: ${errorMessage}`);
-            if (status === 403) throw new FatalError(`API access forbidden: ${errorMessage}`);
-            if (status >= 400 && status < 500)
-                throw new FatalError(`Client-side API error (${status}): ${errorMessage}`);
-            if (status >= 500)
-                throw new TransientError(`LLM provider error (${status}): ${errorMessage}`);
-        }
 
-        if (errorMessage.includes("timeout")) {
-            throw new TransientError(`Request timeout: ${errorMessage}`);
-        }
+            if (status) {
+                if (status === 401) {
+                    if (
+                        errorMessage.includes("insufficient permissions") ||
+                        errorMessage.includes("Missing scopes")
+                    ) {
+                        throw new FatalError(
+                            `API key permissions error: Your OpenAI API key lacks required permissions.\n\n` +
+                                `This usually means:\n` +
+                                `1. Your API key doesn't have access to the requested model\n` +
+                                `2. The model requires different API scopes than your key has\n` +
+                                `3. You may need to use a different model (gpt-5-mini, gpt-5-nano, or gpt-4o)\n\n` +
+                                `Try switching models with: /model gpt-5-mini\n` +
+                                `Or use Ollama locally: /model qwen3\n\n` +
+                                `Praise the Omnissiah! The machine spirit requires proper authorization.`,
+                        );
+                    }
+                    throw new FatalError(`API authentication failed: ${errorMessage}`);
+                }
+                if (status === 429)
+                    throw new TransientError(`Rate limit exceeded: ${errorMessage}`);
+                if (status === 403) throw new FatalError(`API access forbidden: ${errorMessage}`);
+                if (status >= 400 && status < 500)
+                    throw new FatalError(`Client-side API error (${status}): ${errorMessage}`);
+                if (status >= 500)
+                    throw new TransientError(`LLM provider error (${status}): ${errorMessage}`);
+            }
 
-        if (errorMessage.includes("network") || errorMessage.includes("ECONNREFUSED")) {
-            throw new TransientError(`Network error: ${errorMessage}`);
-        }
+            if (errorMessage.includes("timeout")) {
+                throw new TransientError(`Request timeout: ${errorMessage}`);
+            }
 
-        throw new TransientError(`Unexpected error: ${errorMessage}`);
-    }
+            if (errorMessage.includes("network") || errorMessage.includes("ECONNREFUSED")) {
+                throw new TransientError(`Network error: ${errorMessage}`);
+            }
+
+            throw new TransientError(`Unexpected error: ${errorMessage}`);
+        }
+    });
 }

@@ -47,7 +47,9 @@ export function ToolConfirmation() {
                 );
             })}
             <Box marginTop={1}>
-                <Text color={theme.dim}>Press ENTER to grant blessing | ESC to deny the ritual</Text>
+                <Text color={theme.dim}>
+                    Press ENTER to grant blessing | ESC to deny the ritual
+                </Text>
             </Box>
         </Box>
     );

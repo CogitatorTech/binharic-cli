@@ -5,6 +5,9 @@ import { ToolError } from "../../errors/index.js";
 
 const converter = compile({ wordwrap: 130 });
 
+const MAX_RESPONSE_SIZE = 10 * 1024 * 1024;
+const DEFAULT_TIMEOUT_MS = 30000;
+
 export const fetchTool = tool({
     description: "Fetch the content of a URL.",
     inputSchema: z
@@ -19,16 +22,45 @@ export const fetchTool = tool({
         .strict(),
     execute: async ({ url, stripMarkup = true }) => {
         try {
-            const response = await fetch(url);
-            const fullText = await response.text();
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
-            if (!response.ok) {
-                throw new ToolError(`Request failed with status ${response.status}: ${fullText}`);
+            try {
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new ToolError(
+                        `Request failed with status ${response.status}: ${errorText}`,
+                    );
+                }
+
+                const contentLength = response.headers?.get("content-length");
+                if (contentLength && parseInt(contentLength) > MAX_RESPONSE_SIZE) {
+                    throw new ToolError(
+                        `Response too large: ${contentLength} bytes exceeds limit of ${MAX_RESPONSE_SIZE} bytes`,
+                    );
+                }
+
+                const fullText = await response.text();
+
+                if (fullText.length > MAX_RESPONSE_SIZE) {
+                    throw new ToolError(
+                        `Response too large: ${fullText.length} bytes exceeds limit of ${MAX_RESPONSE_SIZE} bytes`,
+                    );
+                }
+
+                return stripMarkup ? converter(fullText) : fullText;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
             }
-
-            return stripMarkup ? converter(fullText) : fullText;
         } catch (error: unknown) {
             if (error instanceof Error) {
+                if (error.name === "AbortError") {
+                    throw new ToolError(`Request timeout after ${DEFAULT_TIMEOUT_MS}ms`);
+                }
                 if (error instanceof ToolError) throw error;
                 throw new ToolError(error.message);
             }

@@ -37,7 +37,7 @@ like the ability to analyze projects, run tests, find bugs, and perform code rev
 - Is fully customizable (like customizing system prompt)
 - Comes with a built-in retrieval-augmented generation (RAG) pipeline
 - Comes with a large set of built-in tools (like reading and writing files)
-- Can use external tools via Model Context Protocol (MCP)
+- Can use external tools via the Model Context Protocol (MCP)
 - Comes with built-in workflows for standard software development tasks (like debugging and code review)
 
 See the [ROADMAP.md](ROADMAP.md) for the list of implemented and planned features.
@@ -58,7 +58,7 @@ You can follow the instructions below to install and use Binharic in your termin
 npm install -g @cogitator/binharic-cli
 ```
 
-#### Usage
+#### Running in the Terminal
 
 ```sh
 # Make sure API keys are available in the environment
@@ -77,11 +77,29 @@ binharic
 > So, it's recommended to use state-of-the-art models (like Claude Sonnet 4.5, GPT-5, and Gemini 2.5 Pro) for the best
 > results.
 
+#### Running in a Container
+
+Alternatively, you can start Binharic in a container:
+
+```sh
+# API keys should be available in the environment already
+docker run -it --rm \
+  -v $(PWD):/workspace \
+  -w /workspace \
+  -e OPENAI_API_KEY \
+  -e ANTHROPIC_API_KEY \
+  -e GOOGLE_API_KEY \
+  ghcr.io/cogitatortech/binharic-cli:<version>
+```
+
+`<version>` should be replaced with the version of the Binharic (like `0.1.0-alpha.4`) or `latest`.
+Use `latest` if you want to use the latest (development) version of Binharic.
+
 ---
 
-#### Documentation
+### Documentation
 
-See the [docs](docs) for more information on how to use Binharic coding agent.
+See the [docs](docs) for more information on how to use the Binharic coding agent.
 
 ---
 

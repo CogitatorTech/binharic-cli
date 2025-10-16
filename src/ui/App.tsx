@@ -37,15 +37,35 @@ export default function App() {
         const g = globalThis as typeof globalThis & {
             __binharic_exit_callback?: () => void;
         };
-        // Install a custom exit callback that shows summary before exiting
+
+        let exitTimeout: NodeJS.Timeout | null = null;
+        let isExiting = false;
+
         g.__binharic_exit_callback = () => {
+            if (isExiting) {
+                return;
+            }
+            isExiting = true;
+
             beginExit();
-            // Give Ink time to render the summary, then exit the app and process
-            setTimeout(() => {
+
+            exitTimeout = setTimeout(() => {
                 exit();
-                // extra safety: force process exit shortly after unmount
-                setTimeout(() => process.exit(0), 100);
+                setTimeout(() => {
+                    if (!process.exitCode) {
+                        process.exit(0);
+                    }
+                }, 100);
             }, 600);
+        };
+
+        return () => {
+            if (exitTimeout) {
+                clearTimeout(exitTimeout);
+            }
+            if (g.__binharic_exit_callback) {
+                g.__binharic_exit_callback = undefined;
+            }
         };
     }, [loadInitialConfig, exit, beginExit]);
 

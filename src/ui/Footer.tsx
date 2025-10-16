@@ -70,7 +70,9 @@ export function Footer() {
 
             {status === "error" && (
                 <Box flexDirection="column" alignItems="center" marginBottom={1}>
-                    <Text color={theme.error}>⚠️ Corruption detected in the machine spirit: {error}</Text>
+                    <Text color={theme.error}>
+                        ⚠️ Corruption detected in the machine spirit: {error}
+                    </Text>
                     <Text color={theme.warning}>Consult the sacred logs: {logsDir}</Text>
                     <Text>Press any key to recalibrate and continue.</Text>
                 </Box>
