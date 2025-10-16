@@ -150,20 +150,18 @@ describe("Escape Key to Cancel Agent Work", () => {
             expect(mockStopAgent).toHaveBeenCalled();
         });
 
-        it("should eventually transition to idle after cancel", (done) => {
+        it("should eventually transition to idle after cancel", async () => {
             let status = "responding";
 
             if (status === "responding") {
                 status = "interrupted";
             }
 
-            setTimeout(() => {
-                if (status === "interrupted") {
-                    status = "idle";
-                }
-                expect(status).toBe("idle");
-                done();
-            }, 100);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            if (status === "interrupted") {
+                status = "idle";
+            }
+            expect(status).toBe("idle");
         });
     });
 

@@ -59,6 +59,7 @@ test: check-deps ## Run the test suite
 	@$(PACKAGE_MANAGER) test
 
 coverage: check-deps ## Run the test suite and generate a coverage report
+	@mkdir -p coverage/.tmp
 	@$(PACKAGE_MANAGER) run coverage
 
 lint: check-deps ## Run linter checks

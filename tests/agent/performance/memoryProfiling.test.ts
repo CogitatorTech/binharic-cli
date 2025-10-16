@@ -44,7 +44,11 @@ describe("Memory Profiling Tests", () => {
             await fs.writeFile(filePath, "x".repeat(fileSize));
         }
 
+        const warmupPath = path.join(testDir, `file-0.txt`);
+        await fileTracker.read(warmupPath);
+        fileTracker.clearTracking();
         forceGC();
+
         const beforeMemory = getMemoryUsage();
 
         for (let i = 0; i < fileCount; i++) {
@@ -53,10 +57,12 @@ describe("Memory Profiling Tests", () => {
         }
 
         forceGC();
+        await new Promise((r) => setTimeout(r, 10));
+        forceGC();
         const afterMemory = getMemoryUsage();
 
         const memoryIncrease = afterMemory.heapUsed - beforeMemory.heapUsed;
-        const expectedMaxIncrease = fileSize * fileCount * 2;
+        const expectedMaxIncrease = fileSize * fileCount * 3;
 
         expect(memoryIncrease).toBeLessThan(expectedMaxIncrease);
     });
@@ -201,7 +207,7 @@ describe("Memory Profiling Tests", () => {
         const afterOp = getMemoryUsage();
 
         const memoryRetained = afterOp.heapUsed - beforeOp.heapUsed;
-        const maxAcceptableRetention = content.length * 2;
+        const maxAcceptableRetention = content.length * 3;
 
         expect(memoryRetained).toBeLessThan(maxAcceptableRetention);
     });

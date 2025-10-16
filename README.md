@@ -79,7 +79,7 @@ binharic
 
 #### Running in a Container
 
-Alternatively, you can start Binharic in a container:
+Alternatively, you can run Binharic in a container:
 
 ```sh
 # API keys should be available in the environment already
