@@ -10,7 +10,7 @@
 [![Code Coverage](https://img.shields.io/codecov/c/github/CogitatorTech/binharic-cli?style=flat&label=coverage&labelColor=333333&logo=codecov&logoColor=white)](https://codecov.io/gh/CogitatorTech/binharic-cli)
 [![Code Quality](https://img.shields.io/codefactor/grade/github/CogitatorTech/binharic-cli?style=flat&label=code%20quality&labelColor=333333&logo=codefactor&logoColor=white)](https://www.codefactor.io/repository/github/CogitatorTech/binharic-cli)
 [![npm](https://img.shields.io/npm/v/%40cogitator%2Fbinharic-cli?style=flat&labelColor=333333&logo=npm&logoColor=white)](https://www.npmjs.com/package/@cogitator/binharic-cli)
-[![Documentation](https://img.shields.io/badge/docs-latest-8ca0d7?style=flat&labelColor=333333&logo=read-the-docs&logoColor=white)](docs)
+[![Documentation](https://img.shields.io/badge/docs-read-8ca0d7?style=flat&labelColor=333333&logo=read-the-docs&logoColor=white)](docs)
 [![License](https://img.shields.io/badge/license-MIT-00acc1?style=flat&labelColor=333333&logo=open-source-initiative&logoColor=white)](LICENSE)
 
 A multi-provider AI coding agent with the persona of a Tech-Priest
